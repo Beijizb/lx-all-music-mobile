@@ -1,6 +1,7 @@
 import musicSearch from './musicSearch'
 import { httpFetch } from '../../request'
 import { signWbi, paramsToQuery } from './wbi'
+import lyric from './lyric'
 
 const playHeaders = {
   'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36 Edg/89.0.774.63',
@@ -152,12 +153,15 @@ async function getMusicUrl(songInfo, type) {
     
     // 首先尝试使用标准 API（dash 格式，音视频分离）
     // 注意：新版本 API 使用 /x/player/wbi/playurl，需要 WBI 签名
+    // 注意：720P以下不需要Cookie，720P及以上需要SESSDATA Cookie
+    // 当前不强制要求Cookie，会优先获取可用的清晰度
     const params = {
       ...(useBvid ? { bvid: useBvid } : { aid: useAid }),
       cid: finalCid,
       fnval: 16, // 请求 dash 格式（音视频分离）
       fnver: 0, // 固定值
-      fourk: 1, // 支持 4K
+      fourk: 0, // 默认不支持4K（需要大会员），设为0可获取更多可用清晰度
+      qn: 64, // 请求720P（如果无Cookie会自动降级到480P）
     }
 
     // 对播放参数进行 WBI 签名
@@ -177,11 +181,15 @@ async function getMusicUrl(songInfo, type) {
     console.log('[Bilibili] 请求参数:', params)
 
     // 构建带 Referer 的 headers（参考 bilibili-api-ts）
+    // 注意：如果需要获取720P及以上清晰度，需要添加 SESSDATA Cookie
+    // 当前实现不强制要求Cookie，会自动降级到可用清晰度
     const requestHeaders = {
       ...playHeaders,
       referer: useBvid 
         ? `https://www.bilibili.com/video/${useBvid}`
         : `https://www.bilibili.com/video/av${useAid}`,
+      // 如果需要支持用户登录Cookie，可以在这里添加：
+      // cookie: userSessData ? `SESSDATA=${userSessData}` : undefined,
     }
 
     let url = null
@@ -194,10 +202,35 @@ async function getMusicUrl(songInfo, type) {
       })
 
       const resp = await requestObj.promise
-      data = resp.body?.data
+      
+      // 检查响应状态码
+      if (resp.statusCode !== 200) {
+        console.warn(`[Bilibili] 播放地址 API 返回非 200 状态码: ${resp.statusCode}`)
+        throw new Error(`API 返回状态码: ${resp.statusCode}`)
+      }
+      
+      // 处理响应体
+      let bodyData = resp.body
+      if (typeof bodyData === 'string') {
+        try {
+          bodyData = JSON.parse(bodyData)
+        } catch (e) {
+          console.error('[Bilibili] 解析播放地址响应 JSON 失败:', e)
+          throw new Error('响应数据格式错误')
+        }
+      }
+      
+      // 检查 API 返回的 code
+      if (bodyData?.code !== 0 && bodyData?.code !== undefined) {
+        console.error('[Bilibili] 播放地址 API 返回错误码:', bodyData.code, bodyData.message)
+        throw new Error(`API 返回错误: ${bodyData.message || '未知错误'}`)
+      }
+      
+      data = bodyData?.data
 
       console.log('[Bilibili] 播放地址响应:', {
         statusCode: resp.statusCode,
+        apiCode: bodyData?.code,
         hasData: !!data,
         hasDash: !!data?.dash,
         hasDurl: !!data?.durl,
@@ -210,21 +243,80 @@ async function getMusicUrl(songInfo, type) {
         throw new Error('标准 API 无数据')
       }
 
-      // 优先使用 dash.audio（音视频分离格式）
+      // 优先使用 dash.audio（音视频分离格式，纯音频流）
       if (data.dash && data.dash.audio && data.dash.audio.length > 0) {
         const audios = data.dash.audio
         // 按带宽排序，选择合适音质（带宽越大音质越好）
         audios.sort((a, b) => (b.bandwidth || 0) - (a.bandwidth || 0))
-        url = audios[0].base_url || audios[0].backup_url?.[0]
-        console.log('[Bilibili] 使用 dash.audio，选择音质:', {
-          bandwidth: audios[0].bandwidth,
-          id: audios[0].id,
-          codecs: audios[0].codecs,
+        const selectedAudio = audios[0]
+        // 优先使用 base_url，如果没有则使用 backup_url 的第一个
+        url = selectedAudio.base_url || selectedAudio.baseUrl || 
+              (selectedAudio.backup_url && selectedAudio.backup_url[0]) ||
+              (selectedAudio.backupUrl && selectedAudio.backupUrl[0])
+        
+        // 处理 URL 中的 Unicode 转义符
+        if (url) {
+          try {
+            url = decodeURIComponent(url)
+          } catch (e) {
+            // 如果解码失败，使用原始 URL
+            console.warn('[Bilibili] URL Unicode 解码失败，使用原始 URL')
+          }
+        }
+        
+        console.log('[Bilibili] 使用 dash.audio（纯音频流），选择音质:', {
+          bandwidth: selectedAudio.bandwidth,
+          id: selectedAudio.id,
+          codecs: selectedAudio.codecs,
+          hasUrl: !!url,
         })
-      } else if (data.durl && data.durl.length > 0) {
-        // 降级使用 durl（FLV/MP4 格式）
-        url = data.durl[0].url
-        console.log('[Bilibili] 使用 durl 格式')
+      }
+      
+      // 如果没有音频流，使用视频流（视频流也包含音频，音视频混合）
+      if (!url && data.dash && data.dash.video && data.dash.video.length > 0) {
+        const videos = data.dash.video
+        // 按带宽排序，选择合适清晰度（带宽越大清晰度越好）
+        videos.sort((a, b) => (b.bandwidth || 0) - (a.bandwidth || 0))
+        const selectedVideo = videos[0]
+        // 优先使用 base_url，如果没有则使用 backup_url 的第一个
+        url = selectedVideo.base_url || selectedVideo.baseUrl ||
+              (selectedVideo.backup_url && selectedVideo.backup_url[0]) ||
+              (selectedVideo.backupUrl && selectedVideo.backupUrl[0])
+        
+        // 处理 URL 中的 Unicode 转义符
+        if (url) {
+          try {
+            url = decodeURIComponent(url)
+          } catch (e) {
+            console.warn('[Bilibili] URL Unicode 解码失败，使用原始 URL')
+          }
+        }
+        
+        console.log('[Bilibili] 使用 dash.video（音视频混合流），选择清晰度:', {
+          bandwidth: selectedVideo.bandwidth,
+          id: selectedVideo.id,
+          codecs: selectedVideo.codecs,
+          width: selectedVideo.width,
+          height: selectedVideo.height,
+          hasUrl: !!url,
+        })
+      }
+      
+      // 如果 DASH 格式都没有，降级使用 durl（FLV/MP4 格式，音视频混合）
+      if (!url && data.durl && data.durl.length > 0) {
+        const durlItem = data.durl[0]
+        url = durlItem.url || durlItem.backup_url?.[0]
+        
+        // 处理 URL 中的 Unicode 转义符
+        if (url) {
+          try {
+            url = decodeURIComponent(url)
+          } catch (e) {
+            console.warn('[Bilibili] URL Unicode 解码失败，使用原始 URL')
+          }
+        }
+        
+        console.log('[Bilibili] 使用 durl 格式（MP4/FLV，音视频混合），hasUrl:', !!url)
       }
     } catch (error) {
       console.warn('[Bilibili] 标准 API 请求失败，尝试 HTML5 模式:', error.message)
@@ -268,15 +360,63 @@ async function getMusicUrl(songInfo, type) {
         })
 
         if (html5Data) {
-          // HTML5 模式通常返回 durl 格式
-          if (html5Data.durl && html5Data.durl.length > 0) {
-            url = html5Data.durl[0].url
-            console.log('[Bilibili] HTML5 模式成功获取播放地址')
-          } else if (html5Data.dash && html5Data.dash.audio && html5Data.dash.audio.length > 0) {
+          // HTML5 模式优先使用音频流
+          if (html5Data.dash && html5Data.dash.audio && html5Data.dash.audio.length > 0) {
             const audios = html5Data.dash.audio
             audios.sort((a, b) => (b.bandwidth || 0) - (a.bandwidth || 0))
-            url = audios[0].base_url || audios[0].backup_url?.[0]
-            console.log('[Bilibili] HTML5 模式使用 dash.audio')
+            const selectedAudio = audios[0]
+            url = selectedAudio.base_url || selectedAudio.baseUrl ||
+                  (selectedAudio.backup_url && selectedAudio.backup_url[0]) ||
+                  (selectedAudio.backupUrl && selectedAudio.backupUrl[0])
+            
+            // 处理 URL 中的 Unicode 转义符
+            if (url) {
+              try {
+                url = decodeURIComponent(url)
+              } catch (e) {
+                console.warn('[Bilibili] HTML5 URL Unicode 解码失败，使用原始 URL')
+              }
+            }
+            
+            console.log('[Bilibili] HTML5 模式使用 dash.audio（纯音频流），hasUrl:', !!url)
+          }
+          
+          // 如果没有音频流，使用视频流（音视频混合）
+          if (!url && html5Data.dash && html5Data.dash.video && html5Data.dash.video.length > 0) {
+            const videos = html5Data.dash.video
+            videos.sort((a, b) => (b.bandwidth || 0) - (a.bandwidth || 0))
+            const selectedVideo = videos[0]
+            url = selectedVideo.base_url || selectedVideo.baseUrl ||
+                  (selectedVideo.backup_url && selectedVideo.backup_url[0]) ||
+                  (selectedVideo.backupUrl && selectedVideo.backupUrl[0])
+            
+            // 处理 URL 中的 Unicode 转义符
+            if (url) {
+              try {
+                url = decodeURIComponent(url)
+              } catch (e) {
+                console.warn('[Bilibili] HTML5 URL Unicode 解码失败，使用原始 URL')
+              }
+            }
+            
+            console.log('[Bilibili] HTML5 模式使用 dash.video（音视频混合流），hasUrl:', !!url)
+          }
+          
+          // 如果 DASH 格式都没有，使用 durl（MP4/FLV 格式，音视频混合）
+          if (!url && html5Data.durl && html5Data.durl.length > 0) {
+            const durlItem = html5Data.durl[0]
+            url = durlItem.url || durlItem.backup_url?.[0]
+            
+            // 处理 URL 中的 Unicode 转义符
+            if (url) {
+              try {
+                url = decodeURIComponent(url)
+              } catch (e) {
+                console.warn('[Bilibili] HTML5 URL Unicode 解码失败，使用原始 URL')
+              }
+            }
+            
+            console.log('[Bilibili] HTML5 模式使用 durl（MP4/FLV，音视频混合），hasUrl:', !!url)
           }
         }
       } catch (html5Error) {
@@ -318,6 +458,7 @@ const bi = {
       },
     }
   },
+  getLyric: lyric.getLyric,
   getMusicDetailPageUrl(songInfo) {
     const bvid = songInfo.meta?.bvid
     const aid = songInfo.meta?.aid
