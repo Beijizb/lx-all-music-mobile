@@ -89,10 +89,14 @@ jobs:
           cd android/app/build/outputs/apk/release
           md5sum *.apk
 
+      - name: Get package name
+        run: echo "PACKAGE_NAME=$(node -p "require('./package.json').name")" >> $GITHUB_ENV
+
       - name: Upload Artifact
         uses: ./.github/actions/upload-artifact
         env:
           PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
+          PACKAGE_NAME: ${{ env.PACKAGE_NAME }}
 
 
   Release:
@@ -122,6 +126,9 @@ jobs:
       - name: Get package version
         run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
 
+      - name: Get package name
+        run: echo "PACKAGE_NAME=$(node -p "require('./package.json').name")" >> $GITHUB_ENV
+
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
@@ -130,10 +137,10 @@ jobs:
           draft: false
           tag_name: v${{ env.PACKAGE_VERSION }}
           files: |
-            artifacts/lx-netease-music-mobile-v${{ env.PACKAGE_VERSION }}-arm64-v8a.apk
-            artifacts/lx-netease-music-mobile-v${{ env.PACKAGE_VERSION }}-armeabi-v7a.apk
-            artifacts/lx-netease-music-mobile-v${{ env.PACKAGE_VERSION }}-x86_64.apk
-            artifacts/lx-netease-music-mobile-v${{ env.PACKAGE_VERSION }}-x86.apk
-            artifacts/lx-netease-music-mobile-v${{ env.PACKAGE_VERSION }}-universal.apk
+            artifacts/${{ env.PACKAGE_NAME }}-v${{ env.PACKAGE_VERSION }}-arm64-v8a.apk
+            artifacts/${{ env.PACKAGE_NAME }}-v${{ env.PACKAGE_VERSION }}-armeabi-v7a.apk
+            artifacts/${{ env.PACKAGE_NAME }}-v${{ env.PACKAGE_VERSION }}-x86_64.apk
+            artifacts/${{ env.PACKAGE_NAME }}-v${{ env.PACKAGE_VERSION }}-x86.apk
+            artifacts/${{ env.PACKAGE_NAME }}-v${{ env.PACKAGE_VERSION }}-universal.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
