@@ -88,21 +88,33 @@ function secToDuration(sec) {
 
 // 从 URL 或其他字段中提取 bvid 或 aid
 function extractBvidOrAid(item) {
-  // 优先使用已有的 bvid 或 aid
-  if (item.bvid) return { bvid: item.bvid, aid: item.aid };
-  if (item.aid) return { bvid: null, aid: item.aid };
+  // 参考 bb.js 的实现，直接使用 API 返回的字段
+  // 优先使用已有的 bvid 或 aid（检查是否为有效值）
+  let bvid = item.bvid;
+  let aid = item.aid;
+
+  // 如果 bvid 或 aid 是空字符串，视为无效
+  if (bvid && typeof bvid === "string" && bvid.trim()) {
+    return { bvid: bvid.trim(), aid: aid && typeof aid === "string" ? aid.trim() : aid };
+  }
+  if (aid && (typeof aid === "string" || typeof aid === "number")) {
+    const aidStr = String(aid).trim();
+    if (aidStr) {
+      return { bvid: null, aid: aidStr };
+    }
+  }
 
   // 尝试从 arcurl 或其他 URL 字段中提取
   const url = item.arcurl || item.url || item.link || "";
   if (url) {
-    // 匹配 BV 号: /video/BVxxxxxxxxxx
-    const bvidMatch = url.match(/\/video\/(BV[a-zA-Z0-9]+)/i);
-    if (bvidMatch) {
-      return { bvid: bvidMatch[1], aid: item.aid };
+    // 匹配 BV 号: /video/BVxxxxxxxxxx 或 bilibili.com/video/BVxxxxxxxxxx
+    const bvidMatch = url.match(/(?:bilibili\.com\/video\/|^\/video\/)(BV[a-zA-Z0-9]+)/i);
+    if (bvidMatch && bvidMatch[1]) {
+      return { bvid: bvidMatch[1], aid: aid && typeof aid === "string" ? aid.trim() : aid };
     }
-    // 匹配 av 号: /video/av123456 或 /video/av123456789
-    const aidMatch = url.match(/\/video\/av(\d+)/i);
-    if (aidMatch) {
+    // 匹配 av 号: /video/av123456 或 bilibili.com/video/av123456
+    const aidMatch = url.match(/(?:bilibili\.com\/video\/av|^\/video\/av)(\d+)/i);
+    if (aidMatch && aidMatch[1]) {
       return { bvid: null, aid: aidMatch[1] };
     }
   }
@@ -110,16 +122,18 @@ function extractBvidOrAid(item) {
   // 尝试从其他可能的字段提取
   // 某些 API 可能返回 video_id 或其他字段
   if (item.video_id) {
+    const videoId = String(item.video_id).trim();
     // video_id 可能是 bvid 格式
-    if (/^BV[a-zA-Z0-9]+$/i.test(item.video_id)) {
-      return { bvid: item.video_id, aid: item.aid };
+    if (/^BV[a-zA-Z0-9]+$/i.test(videoId)) {
+      return { bvid: videoId, aid: aid && typeof aid === "string" ? aid.trim() : aid };
     }
     // 或者可能是 aid
-    if (/^\d+$/.test(item.video_id)) {
-      return { bvid: null, aid: item.video_id };
+    if (/^\d+$/.test(videoId)) {
+      return { bvid: null, aid: videoId };
     }
   }
 
+  // 如果都没有，返回 null
   return { bvid: null, aid: null };
 }
 
@@ -229,19 +243,29 @@ async function handleSearchMusic(keyword, page, limit) {
         
         // 如果既没有 bvid 也没有 aid，跳过这个结果
         if (!bvid && !aid) {
-          console.warn(`[Bilibili] 跳过无效结果（缺少 bvid 和 aid）:`, {
-            title: item.title,
-            arcurl: item.arcurl,
-            url: item.url,
-          });
+          // 添加调试信息，帮助排查问题
+          if (index < 5) {
+            console.warn(`[Bilibili] 跳过无效结果（缺少 bvid 和 aid）:`, {
+              title: item.title,
+              itemKeys: Object.keys(item),
+              bvid: item.bvid,
+              aid: item.aid,
+              arcurl: item.arcurl,
+              url: item.url,
+              cid: item.cid,
+            });
+          }
           return null;
         }
 
         const title = item.title?.replace(/(<em(.*?)>)|(<\/em>)/g, "") || "";
         const duration = durationToSec(item.duration);
         
+        // 参考 bb.js 的实现，id 优先级：cid > bvid > aid
+        const musicId = item.cid || bvid || aid || `bi_${Math.random()}`;
+        
         const musicItem = {
-          id: bvid || aid || `bi_${item.cid || Math.random()}`,
+          id: musicId,
           name: title,
           singer: item.author || item.owner?.name || "未知UP主",
           source: "bi",
@@ -252,9 +276,9 @@ async function handleSearchMusic(keyword, page, limit) {
             picUrl: item.pic?.startsWith("//") ? `http:${item.pic}` : item.pic || null,
             qualitys: [{ type: "128k", size: null }],
             _qualitys: { "128k": {} },
-            bvid: bvid,
-            cid: item.cid,
-            aid: aid,
+            bvid: bvid || undefined, // 只保存有效值
+            cid: item.cid || undefined,
+            aid: aid || undefined,
           },
         };
         
