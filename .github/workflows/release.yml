@@ -1,0 +1,139 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  Android:
+    name: Android
+    runs-on: ubuntu-latest-8-cores
+    permissions:
+      contents: write
+    steps:
+      - name: Check out git repository
+        uses: actions/checkout@v4
+
+      - name: Setup Env
+        uses: ./.github/actions/setup
+
+      - name: Cache Gradle & npm
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.npm
+            android/.gradle
+          key: ${{ runner.os }}-build-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-
+
+      - name: Build Packages
+        shell: bash
+        run: |
+          cd android
+          # 如果没有签名配置，创建临时的 keystore
+          if [ ! -f "app/keystore.properties" ]; then
+            echo "创建临时签名配置..."
+            keytool -genkeypair -v -storetype PKCS12 -keystore app/debug.keystore -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+            echo "storeFile=debug.keystore" > app/keystore.properties
+            echo "keyAlias=androiddebugkey" >> app/keystore.properties
+            echo "storePassword=android" >> app/keystore.properties
+            echo "keyPassword=android" >> app/keystore.properties
+          fi
+          # 检查是否有有效的签名 secrets
+          chmod +x ./gradlew
+          # 读取 secrets（如果未设置则为空字符串）
+          KEYSTORE_FILE="${{ secrets.MYAPP_UPLOAD_STORE_FILE }}"
+          KEYSTORE_BASE64="${{ secrets.MYAPP_KEYSTORE_BASE64 }}"
+          # 严格验证：确保文件名和 base64 内容都有效
+          # 检查文件名：非空、长度>0、不包含路径分隔符
+          # 检查 base64：非空、长度>10（至少包含一些内容）
+          if [ -n "${KEYSTORE_FILE}" ] && \
+             [ "${#KEYSTORE_FILE}" -gt 0 ] && \
+             [ "${KEYSTORE_FILE}" != "/" ] && \
+             [ "${KEYSTORE_FILE}" != "app/" ] && \
+             [ -n "${KEYSTORE_BASE64}" ] && \
+             [ "${#KEYSTORE_BASE64}" -gt 10 ]; then
+            echo "使用提供的签名配置..."
+            TARGET_FILE="app/${KEYSTORE_FILE}"
+            echo "${KEYSTORE_BASE64}" | base64 --decode > "${TARGET_FILE}"
+            ./gradlew assembleRelease \
+              -PMYAPP_UPLOAD_STORE_FILE="${KEYSTORE_FILE}" \
+              -PMYAPP_UPLOAD_KEY_ALIAS="${{ secrets.MYAPP_UPLOAD_KEY_ALIAS }}" \
+              -PMYAPP_UPLOAD_STORE_PASSWORD="${{ secrets.MYAPP_UPLOAD_STORE_PASSWORD }}" \
+              -PMYAPP_UPLOAD_KEY_PASSWORD="${{ secrets.MYAPP_UPLOAD_KEY_PASSWORD }}"
+            rm -f "${TARGET_FILE}"
+          else
+            echo "使用临时签名配置（secrets 未配置或无效）..."
+            ./gradlew assembleRelease
+          fi
+
+      # Push tag to GitHub if package.json version's tag is not tagged
+      - name: Get package version
+        run: node -p -e '`PACKAGE_VERSION=${require("./package.json").version}`' >> $GITHUB_ENV
+
+      - name: Create git tag
+        uses: pkgdeps/git-tag-action@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_repo: ${{ github.repository }}
+          version: ${{ env.PACKAGE_VERSION }}
+          git_commit_sha: ${{ github.sha }}
+          git_tag_prefix: 'v'
+
+      - name: Generate file MD5
+        run: |
+          cd android/app/build/outputs/apk/release
+          md5sum *.apk
+
+      - name: Upload Artifact
+        uses: ./.github/actions/upload-artifact
+        env:
+          PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
+
+
+  Release:
+    name: Release
+    runs-on: ubuntu-latest-8-cores
+    needs: [Android]
+    steps:
+      - name: Check out git repository
+        uses: actions/checkout@v4
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+          merge-multiple: true
+
+      - name: Generate release body
+        run: |
+          awk 'BEGIN{RS="---"}{if(NR==1)print $0}' ./publish/changeLog.md > RELEASE_NOTES.md
+          echo -e '\n### File MD5\n```' >> RELEASE_NOTES.md
+          cd artifacts
+          md5sum *.apk >> ../RELEASE_NOTES.md
+          cd ..
+          echo -e '```\n' >> RELEASE_NOTES.md
+          echo -e '\n[软件安装包说明](https://lyswhut.github.io/lx-music-doc/download#%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85%E5%8C%85%E8%AF%B4%E6%98%8E)\n' >> RELEASE_NOTES.md
+
+      - name: Get package version
+        run: node -p -e '`PACKAGE_VERSION=${require("./package.json").version}`' >> $GITHUB_ENV
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: RELEASE_NOTES.md
+          prerelease: false
+          draft: false
+          tag_name: v${{ env.PACKAGE_VERSION }}
+          files: |
+            artifacts/lx-netease-music-mobile-v${{ env.PACKAGE_VERSION }}-arm64-v8a.apk
+            artifacts/lx-netease-music-mobile-v${{ env.PACKAGE_VERSION }}-armeabi-v7a.apk
+            artifacts/lx-netease-music-mobile-v${{ env.PACKAGE_VERSION }}-x86_64.apk
+            artifacts/lx-netease-music-mobile-v${{ env.PACKAGE_VERSION }}-x86.apk
+            artifacts/lx-netease-music-mobile-v${{ env.PACKAGE_VERSION }}-universal.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
