@@ -245,6 +245,24 @@ export default {
         // 参考 bb.js 的实现，id 优先级：cid > bvid > aid
         const musicId = item.cid || bvid || aid || `bi_${Math.random()}`
 
+        // 确保 bvid 和 aid 是字符串类型，且不为空
+        const metaBvid = bvid && String(bvid).trim() ? String(bvid).trim() : undefined
+        const metaAid = aid && String(aid).trim() ? String(aid).trim() : undefined
+        const metaCid = item.cid ? String(item.cid).trim() : undefined
+
+        // 添加调试信息（前3个结果）
+        if (index < 3) {
+          console.log(`[Bilibili] 处理搜索结果 ${index + 1}:`, {
+            title,
+            extractedBvid: bvid,
+            extractedAid: aid,
+            finalBvid: metaBvid,
+            finalAid: metaAid,
+            cid: metaCid,
+            musicId,
+          })
+        }
+
         return {
           singer: item.author || item.owner?.name || '未知UP主',
           name: title,
@@ -256,14 +274,15 @@ export default {
           _types: { '128k': {} },
           typeUrl: {},
           meta: {
-            songId: bvid || aid || '',
-            albumName: bvid || aid || '',
+            songId: metaBvid || metaAid || musicId || '',
+            albumName: metaBvid || metaAid || '',
             picUrl: item.pic?.startsWith('//') ? `http:${item.pic}` : item.pic || null,
             qualitys: [{ type: '128k', size: null }],
             _qualitys: { '128k': {} },
-            bvid: bvid || undefined, // 只保存有效值
-            cid: item.cid || undefined,
-            aid: aid || undefined,
+            // 确保这些字段存在且有效
+            ...(metaBvid ? { bvid: metaBvid } : {}),
+            ...(metaAid ? { aid: metaAid } : {}),
+            ...(metaCid ? { cid: metaCid } : {}),
           },
         }
       })

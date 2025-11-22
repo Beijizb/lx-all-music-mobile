@@ -154,6 +154,19 @@ export const toOldMusicInfo = (minfo: LX.Music.MusicInfo): any => {
         oInfo.mrcUrl = minfo.meta.mrcUrl
         oInfo.trcUrl = minfo.meta.trcUrl
         break
+      case 'bi':
+        // bilibili 需要保留 bvid、aid、cid 等字段
+        oInfo.meta = {
+          songId: minfo.meta.songId,
+          albumName: minfo.meta.albumName,
+          picUrl: minfo.meta.picUrl,
+          qualitys: minfo.meta.qualitys,
+          _qualitys: minfo.meta._qualitys,
+          ...(minfo.meta.bvid ? { bvid: minfo.meta.bvid } : {}),
+          ...(minfo.meta.aid ? { aid: minfo.meta.aid } : {}),
+          ...(minfo.meta.cid ? { cid: minfo.meta.cid } : {}),
+        }
+        break
     }
   }
 
