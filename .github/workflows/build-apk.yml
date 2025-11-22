@@ -58,10 +58,10 @@ jobs:
           echo "${{ secrets.MYAPP_KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
           
           # 2. 创建 keystore.properties
-          echo "MYAPP_UPLOAD_STORE_FILE=app/release.keystore" > app/keystore.properties
-          echo "MYAPP_UPLOAD_KEY_ALIAS=${{ secrets.MYAPP_UPLOAD_KEY_ALIAS }}" >> app/keystore.properties
-          echo "MYAPP_UPLOAD_STORE_PASSWORD=${{ secrets.MYAPP_UPLOAD_STORE_PASSWORD }}" >> app/keystore.properties
-          echo "MYAPP_UPLOAD_KEY_PASSWORD=${{ secrets.MYAPP_UPLOAD_KEY_PASSWORD }}" >> app/keystore.properties
+          echo "MYAPP_UPLOAD_STORE_FILE=app/release.keystore" > keystore.properties
+          echo "MYAPP_UPLOAD_KEY_ALIAS=${{ secrets.MYAPP_UPLOAD_KEY_ALIAS }}" >> keystore.properties
+          echo "MYAPP_UPLOAD_STORE_PASSWORD=${{ secrets.MYAPP_UPLOAD_STORE_PASSWORD }}" >> keystore.properties
+          echo "MYAPP_UPLOAD_KEY_PASSWORD=${{ secrets.MYAPP_UPLOAD_KEY_PASSWORD }}" >> keystore.properties
           
           # 3. 构建 Release APK
           ./gradlew assembleRelease
