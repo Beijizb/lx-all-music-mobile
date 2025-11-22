@@ -37,7 +37,12 @@ jobs:
           # 如果没有签名配置，创建临时的 keystore
           if [ ! -f "app/keystore.properties" ]; then
             echo "创建临时签名配置..."
-            keytool -genkeypair -v -storetype PKCS12 -keystore app/debug.keystore -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+            # 检查 keystore 文件是否存在，如果不存在则创建
+            if [ ! -f "app/debug.keystore" ]; then
+              keytool -genkeypair -v -storetype PKCS12 -keystore app/debug.keystore -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+            else
+              echo "debug.keystore 已存在，跳过创建"
+            fi
             echo "storeFile=debug.keystore" > app/keystore.properties
             echo "keyAlias=androiddebugkey" >> app/keystore.properties
             echo "storePassword=android" >> app/keystore.properties
