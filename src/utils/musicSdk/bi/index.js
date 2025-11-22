@@ -1,5 +1,6 @@
 import musicSearch from './musicSearch'
 import { httpFetch } from '../../request'
+import { signWbi, paramsToQuery } from './wbi'
 
 const playHeaders = {
   'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36 Edg/89.0.774.63',
@@ -23,19 +24,37 @@ async function getMusicUrl(songInfo, type) {
       fullSongInfo: JSON.stringify(songInfo, null, 2).substring(0, 500),
     })
 
+    // 从 meta 中提取 bvid/aid，确保是有效的字符串
     const bvid = songInfo.meta?.bvid
     const aid = songInfo.meta?.aid
     const cid = songInfo.meta?.cid
 
-    console.log('[Bilibili] 提取的标识信息:', { bvid, aid, cid })
+    // 验证并规范化 bvid/aid
+    const normalizeBvid = (val) => {
+      if (!val) return null
+      const str = String(val).trim()
+      return str && /^BV[a-zA-Z0-9]+$/i.test(str) ? str : null
+    }
+    const normalizeAid = (val) => {
+      if (!val) return null
+      const str = String(val).trim()
+      return str && /^\d+$/.test(str) ? str : null
+    }
 
-    // 如果 meta 中没有，尝试从其他字段获取
-    let finalBvid = bvid
-    let finalAid = aid
+    let finalBvid = normalizeBvid(bvid)
+    let finalAid = normalizeAid(aid)
 
-    // 尝试从 id 字段提取（某些情况下 id 可能就是 bvid 或 aid）
+    console.log('[Bilibili] 提取的标识信息:', { 
+      bvid: finalBvid, 
+      aid: finalAid, 
+      cid,
+      rawBvid: bvid,
+      rawAid: aid,
+    })
+
+    // 如果 meta 中没有有效的值，尝试从其他字段获取
     if (!finalBvid && !finalAid && songInfo.id) {
-      const idStr = String(songInfo.id)
+      const idStr = String(songInfo.id).trim()
       // 检查是否是 BV 号
       if (/^BV[a-zA-Z0-9]+$/i.test(idStr)) {
         finalBvid = idStr
@@ -50,7 +69,7 @@ async function getMusicUrl(songInfo, type) {
 
     // 尝试从 songId 字段获取
     if (!finalBvid && !finalAid && songInfo.meta?.songId) {
-      const songId = String(songInfo.meta.songId)
+      const songId = String(songInfo.meta.songId).trim()
       if (/^BV[a-zA-Z0-9]+$/i.test(songId)) {
         finalBvid = songId
         console.log('[Bilibili] 从 songId 字段提取到 bvid:', finalBvid)
@@ -67,22 +86,31 @@ async function getMusicUrl(songInfo, type) {
         metaAid: aid,
         metaSongId: songInfo.meta?.songId,
         metaKeys: songInfo.meta ? Object.keys(songInfo.meta) : [],
+        fullMeta: songInfo.meta,
       })
       throw new Error('该视频缺少必要的标识信息（bvid 或 aid），无法播放。请尝试搜索其他视频。')
     }
 
-    // 使用最终提取的值
-    const useBvid = finalBvid || bvid
-    const useAid = finalAid || aid
+    // 使用最终提取的值（确保是有效的字符串）
+    const useBvid = finalBvid
+    const useAid = finalAid
 
     // 如果没有 cid，先获取
     let finalCid = cid
     if (!finalCid) {
       const params = useBvid ? { bvid: useBvid } : { aid: useAid }
+      
+      // 对获取 cid 的参数进行 WBI 签名
+      let signedParams
+      try {
+        signedParams = await signWbi(params)
+      } catch (error) {
+        console.warn('[Bilibili] 获取 cid 接口 WBI 签名失败，使用原始参数:', error.message)
+        signedParams = params
+      }
+      
       // 确保 URL 正确构建，没有占位符
-      const queryString = Object.keys(params)
-        .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
-        .join('&')
+      const queryString = paramsToQuery(signedParams)
       const viewUrl = `https://api.bilibili.com/x/web-interface/view?${queryString}`
       
       console.log('[Bilibili] 获取 cid 请求 URL:', viewUrl)
@@ -123,6 +151,7 @@ async function getMusicUrl(songInfo, type) {
     // html5: 是否以 html5 平台访问，链接少但可以直接播放
     
     // 首先尝试使用标准 API（dash 格式，音视频分离）
+    // 注意：新版本 API 使用 /x/player/wbi/playurl，需要 WBI 签名
     const params = {
       ...(useBvid ? { bvid: useBvid } : { aid: useAid }),
       cid: finalCid,
@@ -131,10 +160,18 @@ async function getMusicUrl(songInfo, type) {
       fourk: 1, // 支持 4K
     }
 
-    const queryString = Object.keys(params)
-      .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
-      .join('&')
-    const playUrl = `https://api.bilibili.com/x/player/playurl?${queryString}`
+    // 对播放参数进行 WBI 签名
+    let signedParams
+    try {
+      signedParams = await signWbi(params)
+    } catch (error) {
+      console.warn('[Bilibili] 播放接口 WBI 签名失败，使用原始参数:', error.message)
+      signedParams = params
+    }
+
+    // 优先尝试使用 WBI 签名的 API
+    const queryString = paramsToQuery(signedParams)
+    let playUrl = `https://api.bilibili.com/x/player/wbi/playurl?${queryString}`
 
     console.log('[Bilibili] 请求播放地址 URL:', playUrl)
     console.log('[Bilibili] 请求参数:', params)
@@ -202,10 +239,17 @@ async function getMusicUrl(songInfo, type) {
         html5: 1, // HTML5 平台访问
       }
 
-      const html5QueryString = Object.keys(html5Params)
-        .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(html5Params[key])}`)
-        .join('&')
-      const html5PlayUrl = `https://api.bilibili.com/x/player/playurl?${html5QueryString}`
+      // HTML5 模式也尝试使用 WBI 签名
+      let html5SignedParams
+      try {
+        html5SignedParams = await signWbi(html5Params)
+      } catch (error) {
+        console.warn('[Bilibili] HTML5 模式 WBI 签名失败，使用原始参数:', error.message)
+        html5SignedParams = html5Params
+      }
+
+      const html5QueryString = paramsToQuery(html5SignedParams)
+      const html5PlayUrl = `https://api.bilibili.com/x/player/wbi/playurl?${html5QueryString}`
 
       try {
         const html5RequestObj = httpFetch(html5PlayUrl, {

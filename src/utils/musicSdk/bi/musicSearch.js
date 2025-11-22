@@ -1,5 +1,6 @@
 import { httpFetch } from '../../request'
 import { formatPlayTime } from '../../index'
+import { signWbi, paramsToQuery } from './wbi'
 
 // 将秒数转换为 MM:SS 格式（用于处理字符串格式的时长）
 function secToDuration(sec) {
@@ -76,24 +77,46 @@ function extractBvidOrAid(item) {
   let bvid = item.bvid
   let aid = item.aid
 
-  // 如果 bvid 或 aid 是空字符串，视为无效
-  if (bvid && typeof bvid === 'string' && bvid.trim()) {
-    return { bvid: bvid.trim(), aid: aid && typeof aid === 'string' ? aid.trim() : aid }
+  // 规范化 bvid：确保是字符串且非空
+  if (bvid != null) {
+    const bvidStr = String(bvid).trim()
+    if (bvidStr && /^BV[a-zA-Z0-9]+$/i.test(bvidStr)) {
+      // 同时尝试规范化 aid（如果存在）
+      let normalizedAid = null
+      if (aid != null) {
+        const aidStr = String(aid).trim()
+        if (aidStr && /^\d+$/.test(aidStr)) {
+          normalizedAid = aidStr
+        }
+      }
+      return { bvid: bvidStr, aid: normalizedAid }
+    }
   }
-  if (aid && (typeof aid === 'string' || typeof aid === 'number')) {
+
+  // 规范化 aid：确保是字符串且非空
+  if (aid != null) {
     const aidStr = String(aid).trim()
-    if (aidStr) {
+    if (aidStr && /^\d+$/.test(aidStr)) {
       return { bvid: null, aid: aidStr }
     }
   }
 
   // 尝试从 arcurl 或其他 URL 字段中提取
   const url = item.arcurl || item.url || item.link || ''
-  if (url) {
+  if (url && typeof url === 'string') {
     // 匹配 BV 号: /video/BVxxxxxxxxxx 或 bilibili.com/video/BVxxxxxxxxxx
     const bvidMatch = url.match(/(?:bilibili\.com\/video\/|^\/video\/)(BV[a-zA-Z0-9]+)/i)
     if (bvidMatch && bvidMatch[1]) {
-      return { bvid: bvidMatch[1], aid: aid && typeof aid === 'string' ? aid.trim() : aid }
+      const extractedBvid = bvidMatch[1]
+      // 如果原数据中有 aid，也保留
+      let normalizedAid = null
+      if (aid != null) {
+        const aidStr = String(aid).trim()
+        if (aidStr && /^\d+$/.test(aidStr)) {
+          normalizedAid = aidStr
+        }
+      }
+      return { bvid: extractedBvid, aid: normalizedAid }
     }
     // 匹配 av 号: /video/av123456 或 bilibili.com/video/av123456
     const aidMatch = url.match(/(?:bilibili\.com\/video\/av|^\/video\/av)(\d+)/i)
@@ -104,11 +127,19 @@ function extractBvidOrAid(item) {
 
   // 尝试从其他可能的字段提取
   // 某些 API 可能返回 video_id 或其他字段
-  if (item.video_id) {
+  if (item.video_id != null) {
     const videoId = String(item.video_id).trim()
     // video_id 可能是 bvid 格式
     if (/^BV[a-zA-Z0-9]+$/i.test(videoId)) {
-      return { bvid: videoId, aid: aid && typeof aid === 'string' ? aid.trim() : aid }
+      // 如果原数据中有 aid，也保留
+      let normalizedAid = null
+      if (aid != null) {
+        const aidStr = String(aid).trim()
+        if (aidStr && /^\d+$/.test(aidStr)) {
+          normalizedAid = aidStr
+        }
+      }
+      return { bvid: videoId, aid: normalizedAid }
     }
     // 或者可能是 aid
     if (/^\d+$/.test(videoId)) {
@@ -155,9 +186,17 @@ export default {
       const headers = { ...searchHeaders }
       if (cookieStr) headers.cookie = cookieStr
 
-      const searchUrl = `https://api.bilibili.com/x/web-interface/search/type?${Object.keys(params)
-        .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
-        .join('&')}`
+      // 对搜索参数进行 WBI 签名
+      let signedParams
+      try {
+        signedParams = await signWbi(params)
+      } catch (error) {
+        console.warn('[Bilibili] WBI 签名失败，使用原始参数:', error.message)
+        signedParams = params
+      }
+
+      // 构建查询字符串（注意：WBI 签名后的参数不需要再次排序，直接拼接即可）
+      const searchUrl = `https://api.bilibili.com/x/web-interface/search/type?${paramsToQuery(signedParams)}`
 
       const requestObj = httpFetch(searchUrl, {
         method: 'GET',
@@ -246,8 +285,9 @@ export default {
         const musicId = item.cid || bvid || aid || `bi_${Math.random()}`
 
         // 确保 bvid 和 aid 是字符串类型，且不为空
-        const metaBvid = bvid && String(bvid).trim() ? String(bvid).trim() : undefined
-        const metaAid = aid && String(aid).trim() ? String(aid).trim() : undefined
+        // extractBvidOrAid 已经确保返回的是有效的字符串或 null，这里再次验证
+        const metaBvid = bvid && typeof bvid === 'string' && bvid.trim() ? bvid.trim() : undefined
+        const metaAid = aid && (typeof aid === 'string' || typeof aid === 'number') && String(aid).trim() ? String(aid).trim() : undefined
         const metaCid = item.cid ? String(item.cid).trim() : undefined
 
         // 添加调试信息（前3个结果）
