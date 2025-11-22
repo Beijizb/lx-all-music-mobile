@@ -53,17 +53,7 @@ jobs:
 
       - name: Build APK (Release)
         working-directory: android
-        run: |
-          # 如果没有签名配置，创建临时的 keystore
-          if [ ! -f "app/keystore.properties" ]; then
-            echo "创建临时签名配置..."
-            keytool -genkeypair -v -storetype PKCS12 -keystore app/debug.keystore -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-            echo "storeFile=debug.keystore" > app/keystore.properties
-            echo "keyAlias=androiddebugkey" >> app/keystore.properties
-            echo "storePassword=android" >> app/keystore.properties
-            echo "keyPassword=android" >> app/keystore.properties
-          fi
-          ./gradlew assembleRelease
+        run: ./gradlew assembleRelease
         env:
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
           ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
@@ -87,4 +77,3 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
