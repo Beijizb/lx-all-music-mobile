@@ -16,7 +16,7 @@ async function getMusicUrl(songInfo, type) {
     const cid = songInfo.meta?.cid
 
     if (!bvid && !aid) {
-      throw new Error('缺少 bvid 或 aid')
+      throw new Error('该视频缺少必要的标识信息（bvid 或 aid），无法播放。请尝试搜索其他视频。')
     }
 
     // 如果没有 cid，先获取

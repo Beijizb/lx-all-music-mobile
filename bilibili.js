@@ -86,6 +86,43 @@ function secToDuration(sec) {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
+// 从 URL 或其他字段中提取 bvid 或 aid
+function extractBvidOrAid(item) {
+  // 优先使用已有的 bvid 或 aid
+  if (item.bvid) return { bvid: item.bvid, aid: item.aid };
+  if (item.aid) return { bvid: null, aid: item.aid };
+
+  // 尝试从 arcurl 或其他 URL 字段中提取
+  const url = item.arcurl || item.url || item.link || "";
+  if (url) {
+    // 匹配 BV 号: /video/BVxxxxxxxxxx
+    const bvidMatch = url.match(/\/video\/(BV[a-zA-Z0-9]+)/i);
+    if (bvidMatch) {
+      return { bvid: bvidMatch[1], aid: item.aid };
+    }
+    // 匹配 av 号: /video/av123456 或 /video/av123456789
+    const aidMatch = url.match(/\/video\/av(\d+)/i);
+    if (aidMatch) {
+      return { bvid: null, aid: aidMatch[1] };
+    }
+  }
+
+  // 尝试从其他可能的字段提取
+  // 某些 API 可能返回 video_id 或其他字段
+  if (item.video_id) {
+    // video_id 可能是 bvid 格式
+    if (/^BV[a-zA-Z0-9]+$/i.test(item.video_id)) {
+      return { bvid: item.video_id, aid: item.aid };
+    }
+    // 或者可能是 aid
+    if (/^\d+$/.test(item.video_id)) {
+      return { bvid: null, aid: item.video_id };
+    }
+  }
+
+  return { bvid: null, aid: null };
+}
+
 // 搜索音乐
 async function handleSearchMusic(keyword, page, limit) {
   try {
@@ -185,40 +222,55 @@ async function handleSearchMusic(keyword, page, limit) {
 
     console.log(`[Bilibili] 搜索到 ${resultList.length} 个结果，总数: ${resultData.numResults || resultList.length}`);
 
-    const list = resultList.map((item, index) => {
-      const title = item.title?.replace(/(<em(.*?)>)|(<\/em>)/g, "") || "";
-      const duration = durationToSec(item.duration);
-      
-      const musicItem = {
-        id: item.bvid || item.aid || `bi_${item.cid || Math.random()}`,
-        name: title,
-        singer: item.author || item.owner?.name || "未知UP主",
-        source: "bi",
-        interval: secToDuration(duration),
-        meta: {
-          songId: item.bvid || item.aid || "",
-          albumName: item.bvid || item.aid || "",
-          picUrl: item.pic?.startsWith("//") ? `http:${item.pic}` : item.pic || null,
-          qualitys: [{ type: "128k", size: null }],
-          _qualitys: { "128k": {} },
-          bvid: item.bvid,
-          cid: item.cid,
-          aid: item.aid,
-        },
-      };
-      
-      if (index < 3) {
-        console.log(`[Bilibili] 结果 ${index + 1}:`, {
-          name: musicItem.name,
-          singer: musicItem.singer,
-          bvid: musicItem.meta.bvid,
-          aid: musicItem.meta.aid,
-          cid: musicItem.meta.cid
-        });
-      }
-      
-      return musicItem;
-    });
+    const list = resultList
+      .map((item, index) => {
+        // 提取 bvid 或 aid
+        const { bvid, aid } = extractBvidOrAid(item);
+        
+        // 如果既没有 bvid 也没有 aid，跳过这个结果
+        if (!bvid && !aid) {
+          console.warn(`[Bilibili] 跳过无效结果（缺少 bvid 和 aid）:`, {
+            title: item.title,
+            arcurl: item.arcurl,
+            url: item.url,
+          });
+          return null;
+        }
+
+        const title = item.title?.replace(/(<em(.*?)>)|(<\/em>)/g, "") || "";
+        const duration = durationToSec(item.duration);
+        
+        const musicItem = {
+          id: bvid || aid || `bi_${item.cid || Math.random()}`,
+          name: title,
+          singer: item.author || item.owner?.name || "未知UP主",
+          source: "bi",
+          interval: secToDuration(duration),
+          meta: {
+            songId: bvid || aid || "",
+            albumName: bvid || aid || "",
+            picUrl: item.pic?.startsWith("//") ? `http:${item.pic}` : item.pic || null,
+            qualitys: [{ type: "128k", size: null }],
+            _qualitys: { "128k": {} },
+            bvid: bvid,
+            cid: item.cid,
+            aid: aid,
+          },
+        };
+        
+        if (index < 3) {
+          console.log(`[Bilibili] 结果 ${index + 1}:`, {
+            name: musicItem.name,
+            singer: musicItem.singer,
+            bvid: musicItem.meta.bvid,
+            aid: musicItem.meta.aid,
+            cid: musicItem.meta.cid
+          });
+        }
+        
+        return musicItem;
+      })
+      .filter((item) => item !== null); // 过滤掉无效结果
 
     console.log(`[Bilibili] 搜索完成，返回 ${list.length} 首歌曲`);
     const total = resultData.numResults || resultData.page?.total || list.length;
@@ -253,7 +305,7 @@ async function handleGetMusicUrl(musicInfo, quality) {
 
     if (!bvid && !aid) {
       console.error("[Bilibili] 缺少必要参数: bvid 和 aid 都不存在");
-      throw new Error("缺少 bvid 或 aid");
+      throw new Error("该视频缺少必要的标识信息（bvid 或 aid），无法播放。请尝试搜索其他视频。");
     }
 
     // 如果没有 cid，先获取
