@@ -6,6 +6,7 @@ import { isTempId, isEmpty } from './utils'
 import { exitApp } from '@/core/common'
 import { getCurrentTrackId } from './playList'
 import { pause, play, playNext, playPrev } from '@/core/player/player'
+import { log } from '@/utils/log'
 
 let isInitialized = false
 
@@ -66,6 +67,33 @@ const registerPlaybackService = async () => {
 
   TrackPlayer.addEventListener(TPEvent.PlaybackError, async (err: any) => {
     console.log('playback-error', err)
+    // 获取当前播放的 track 信息，记录 URL 以便排查
+    try {
+      const currentTrack = await getCurrentTrackId()
+      if (currentTrack) {
+        const track = await TrackPlayer.getTrack(currentTrack)
+        if (track) {
+          const errorInfo = {
+            id: track.id,
+            url: track.url,
+            urlLength: track.url?.length,
+            urlPrefix: track.url?.substring(0, 100),
+            urlSuffix: track.url?.substring(track.url?.length - 50),
+            title: track.title,
+            artist: track.artist,
+            error: err,
+            errorMessage: err?.message || err?.localizedDescription || JSON.stringify(err),
+            errorCode: err?.code,
+          }
+          console.log('[Player] 播放错误时的 track 信息:', errorInfo)
+          // 同时记录到日志文件
+          log.error('[Player] 播放错误:', JSON.stringify(errorInfo, null, 2))
+        }
+      }
+    } catch (e) {
+      console.warn('[Player] 获取 track 信息失败:', e)
+      log.warn('[Player] 获取 track 信息失败:', e.message || e)
+    }
     global.app_event.error()
     global.app_event.playerError()
   })

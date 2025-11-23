@@ -871,6 +871,14 @@ async function getMusicUrl(songInfo, type) {
           }
         }
       }
+      
+      // 即使获取到了URL，如果播放失败，也可能是CDN地区限制
+      // 这种情况：API返回成功，但CDN拒绝访问（需要特定IP）
+      biLog.warn('所有方式都失败，可能的原因：', {
+        note: '即使API返回成功，B站CDN也可能根据IP地址限制访问',
+        suggestion: '如果播放失败，请尝试使用VPN切换到日本或美国IP',
+        commonIssue: '某些B站视频的CDN有地区限制，需要特定地区的IP才能播放',
+      })
 
       biLog.error('所有方式都失败，无法获取播放地址:', {
         ...errorDetails,
@@ -894,13 +902,64 @@ async function getMusicUrl(songInfo, type) {
         throw new Error('获取到的播放地址格式无效')
       }
       
-      // 记录 URL 信息（不记录完整URL，避免日志过长）
-      biLog.info('成功获取播放地址:', {
-        urlLength: url.length,
-        urlPrefix: url.substring(0, 50) + '...',
-        hasQueryParams: url.includes('?'),
-        timestamp: new Date().toISOString(),
-      })
+      // B站播放URL可能需要特殊处理
+      // 1. 确保URL中没有未编码的特殊字符
+      // 2. 检查URL是否包含必要的参数
+      try {
+        // 尝试解析URL，确保格式正确
+        const urlObj = new URL(url)
+        biLog.info('URL 解析成功:', {
+          protocol: urlObj.protocol,
+          hostname: urlObj.hostname,
+          pathname: urlObj.pathname.substring(0, 50),
+          hasSearch: urlObj.search.length > 0,
+          searchParamsCount: urlObj.searchParams ? Array.from(urlObj.searchParams.keys()).length : 0,
+        })
+        
+        // 检查是否是B站的CDN域名
+        const isBiliCdn = urlObj.hostname.includes('bilivideo.com') || 
+                          urlObj.hostname.includes('biliapi.com') ||
+                          urlObj.hostname.includes('bilibili.com')
+        
+        if (!isBiliCdn) {
+          biLog.warn('URL 不是B站CDN域名，可能无法播放:', urlObj.hostname)
+        }
+        
+        // 记录完整的URL信息（用于排查问题）
+        // 注意：记录完整URL的前200个字符和后50个字符，便于排查问题
+        const urlPreview = url.length > 250 
+          ? url.substring(0, 200) + '...' + url.substring(url.length - 50)
+          : url
+        
+        // 记录完整的URL（用于排查播放失败问题）
+        // 如果播放失败，可以手动测试这个URL是否真的可以访问
+        biLog.info('成功获取播放地址（完整URL）:', url)
+        
+        biLog.info('成功获取播放地址（详细信息）:', {
+          urlLength: url.length,
+          urlPreview: urlPreview,
+          hostname: urlObj.hostname,
+          pathname: urlObj.pathname,
+          hasQueryParams: url.includes('?'),
+          queryParams: urlObj.search,
+          timestamp: new Date().toISOString(),
+          isBiliCdn: isBiliCdn,
+          // 重要提示：
+          // 1. B站播放URL可能需要Referer header，但TrackPlayer只支持userAgent
+          // 2. B站CDN可能有地区限制，某些视频需要特定地区的IP才能播放（如日本、美国IP）
+          // 如果播放失败，可能是这两个原因之一
+          note: 'B站播放URL可能需要Referer header或特定地区IP',
+          suggestion: '如果播放失败，请尝试：1) 使用VPN切换到日本或美国IP；2) 在浏览器中测试URL是否可访问',
+        })
+      } catch (urlError) {
+        biLog.warn('URL 解析失败，但继续使用原始URL:', urlError.message)
+        biLog.info('成功获取播放地址（未解析）:', {
+          urlLength: url.length,
+          urlPrefix: url.substring(0, 80) + '...',
+          hasQueryParams: url.includes('?'),
+          timestamp: new Date().toISOString(),
+        })
+      }
     } else {
       biLog.error('获取到的 URL 为空')
       throw new Error('获取到的播放地址为空')
@@ -908,7 +967,12 @@ async function getMusicUrl(songInfo, type) {
     
     // 返回 URL（移动端可能需要特殊处理 headers）
     // 注意：B站播放URL可能需要 Referer，但 TrackPlayer 只支持 userAgent
-    // 如果播放失败，可能需要重新获取URL
+    // 如果播放失败，系统会自动重试2次刷新URL
+    // 如果仍然失败，可能是：
+    // 1. URL需要Referer header（TrackPlayer不支持）
+    // 2. URL有时效性，已过期
+    // 3. 网络问题或地区限制
+    biLog.info('准备返回播放URL，如果播放失败将自动重试')
     return url
   } catch (error) {
     biLog.error('getMusicUrl error:', error.message || error)
