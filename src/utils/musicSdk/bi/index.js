@@ -113,8 +113,11 @@ async function getMusicUrl(songInfo, type) {
     const useBvid = finalBvid
     const useAid = finalAid
 
-    // 如果没有 cid，先获取
+    // 如果没有 cid，先获取视频信息（参考 bilibili-api-ts 的 get_download_url 实现）
+    // get_download_url 支持 page_index 或 cid，至少提供一个
     let finalCid = cid
+    let pageIndex = null // 分 P 号，从 0 开始（参考 bilibili-api-ts）
+    
     if (!finalCid) {
       const params = useBvid ? { bvid: useBvid } : { aid: useAid }
       
@@ -131,7 +134,7 @@ async function getMusicUrl(songInfo, type) {
       const queryString = paramsToQuery(signedParams)
       const viewUrl = `https://api.bilibili.com/x/web-interface/view?${queryString}`
       
-      biLog.info('获取 cid 请求 URL:', viewUrl)
+      biLog.info('获取视频信息请求 URL:', viewUrl)
       biLog.info('请求参数:', params)
 
       const requestObj = httpFetch(viewUrl, {
@@ -140,62 +143,73 @@ async function getMusicUrl(songInfo, type) {
       })
 
       const resp = await requestObj.promise
-      const data = resp.body?.data
+      
+      // 处理响应体
+      let bodyData = resp.body
+      if (typeof bodyData === 'string') {
+        try {
+          bodyData = JSON.parse(bodyData)
+        } catch (e) {
+          biLog.error('解析视频信息响应 JSON 失败:', e)
+          throw new Error('响应数据格式错误')
+        }
+      }
+      
+      const data = bodyData?.data
 
-      biLog.info('获取 cid 响应:', {
+      biLog.info('获取视频信息响应:', {
         statusCode: resp.statusCode,
+        apiCode: bodyData?.code,
         hasData: !!data,
         hasPages: !!data?.pages,
         pagesLength: data?.pages?.length,
       })
 
       if (data && data.pages && data.pages.length > 0) {
+        // 使用第一个分 P 的信息（参考 bilibili-api-ts：page_index 从 0 开始）
         finalCid = data.pages[0].cid
-        biLog.info('成功获取 cid:', finalCid)
+        pageIndex = 0 // 默认使用第一个分 P
+        biLog.info('成功获取视频信息:', {
+          cid: finalCid,
+          pageIndex: pageIndex,
+          totalPages: data.pages.length,
+          title: data.title,
+        })
       } else {
-        biLog.error('无法获取 cid，响应数据:', {
+        biLog.error('无法获取视频信息，响应数据:', {
           body: resp.body,
           data: data,
+          apiCode: bodyData?.code,
+          apiMessage: bodyData?.message,
         })
-        throw new Error('无法获取 cid')
+        throw new Error('无法获取视频信息')
       }
     } else {
       biLog.info('使用已有的 cid:', finalCid)
+      // 如果已有 cid，pageIndex 设为 null，让 API 自动处理
     }
 
     // 获取播放地址
+    // 参考 MusicFree 插件：优先使用旧版 API（更简单，不需要 WBI 签名）
     // 参考 bilibili-api-ts 文档：get_download_url(page_index, cid, html5)
     // 需要 cid 或 page_index，至少提供一个
-    // html5: 是否以 html5 平台访问，链接少但可以直接播放
     
-    // 首先尝试使用标准 API（dash 格式，音视频分离）
-    // 注意：新版本 API 使用 /x/player/wbi/playurl，需要 WBI 签名
-    // 注意：720P以下不需要Cookie，720P及以上需要SESSDATA Cookie
-    // 当前不强制要求Cookie，会优先获取可用的清晰度
-    const params = {
+    // 方案1: 优先尝试旧版 API（参考 MusicFree 插件实现）
+    // 旧版 API 更简单：只需要 bvid/aid、cid、fnval: 16，不需要 WBI 签名
+    // 这样可以避免签名失败的问题，提高成功率
+    biLog.info('优先尝试旧版 API（参考 MusicFree 插件，无需 WBI 签名）')
+    const simpleParams = {
       ...(useBvid ? { bvid: useBvid } : { aid: useAid }),
       cid: finalCid,
       fnval: 16, // 请求 dash 格式（音视频分离）
-      fnver: 0, // 固定值
-      fourk: 0, // 默认不支持4K（需要大会员），设为0可获取更多可用清晰度
-      qn: 64, // 请求720P（如果无Cookie会自动降级到480P）
     }
-
-    // 对播放参数进行 WBI 签名
-    let signedParams
-    try {
-      signedParams = await signWbi(params)
-    } catch (error) {
-      biLog.warn('播放接口 WBI 签名失败，使用原始参数:', error.message)
-      signedParams = params
-    }
-
-    // 优先尝试使用 WBI 签名的 API
-    const queryString = paramsToQuery(signedParams)
-    let playUrl = `https://api.bilibili.com/x/player/wbi/playurl?${queryString}`
-
-    biLog.info('请求播放地址 URL:', playUrl)
-    biLog.info('请求参数:', params)
+    
+    const simplePlayUrl = `https://api.bilibili.com/x/player/playurl?${Object.keys(simpleParams)
+      .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(simpleParams[key])}`)
+      .join('&')}`
+    
+    biLog.info('旧版 API 请求 URL:', simplePlayUrl)
+    biLog.info('旧版 API 请求参数:', simpleParams)
 
     // 构建带 Referer 的 headers（参考 bilibili-api-ts）
     // 注意：如果需要获取720P及以上清晰度，需要添加 SESSDATA Cookie
@@ -212,151 +226,353 @@ async function getMusicUrl(songInfo, type) {
     let url = null
     let data = null
 
+    // 方案1: 尝试旧版 API（参考 MusicFree 插件）
     try {
-      const requestObj = httpFetch(playUrl, {
+      const simpleRequestObj = httpFetch(simplePlayUrl, {
         method: 'GET',
         headers: requestHeaders,
       })
 
-      const resp = await requestObj.promise
+      const simpleResp = await simpleRequestObj.promise
       
       // 检查响应状态码
-      if (resp.statusCode !== 200) {
-        biLog.warn(`播放地址 API 返回非 200 状态码: ${resp.statusCode}`)
-        throw new Error(`API 返回状态码: ${resp.statusCode}`)
+      if (simpleResp.statusCode !== 200) {
+        biLog.warn(`旧版 API 返回非 200 状态码: ${simpleResp.statusCode}`)
+        throw new Error(`旧版 API 返回状态码: ${simpleResp.statusCode}`)
       }
       
       // 处理响应体
-      let bodyData = resp.body
-      if (typeof bodyData === 'string') {
+      let simpleBodyData = simpleResp.body
+      if (typeof simpleBodyData === 'string') {
         try {
-          bodyData = JSON.parse(bodyData)
+          simpleBodyData = JSON.parse(simpleBodyData)
         } catch (e) {
-          biLog.error('解析播放地址响应 JSON 失败:', e)
-          throw new Error('响应数据格式错误')
+          biLog.warn('旧版 API 解析响应 JSON 失败:', e)
+          throw new Error('旧版 API 响应数据格式错误')
         }
       }
       
       // 检查 API 返回的 code
-      if (bodyData?.code !== 0 && bodyData?.code !== undefined) {
-        biLog.error('播放地址 API 返回错误码:', bodyData.code, bodyData.message)
-        const errorMsg = bodyData.message || '未知错误'
-        // 检查是否是地区限制
-        if (errorMsg.includes('地区') || errorMsg.includes('区域') || errorMsg.includes('地区限制') || 
-            bodyData.code === -10403 || bodyData.code === -10404) {
-          // 不立即抛出错误，继续尝试其他方法
-          biLog.warn('检测到可能的地区限制，将尝试其他方法')
-        } else {
-          // 其他错误也继续尝试，不立即抛出
-          biLog.warn('API 返回错误，将尝试其他方法:', errorMsg)
-        }
-        throw new Error(`标准 API 失败: ${errorMsg}`)
+      if (simpleBodyData?.code !== 0) {
+        biLog.warn('旧版 API 返回错误码:', simpleBodyData?.code, simpleBodyData?.message)
+        throw new Error(`旧版 API 返回错误: ${simpleBodyData?.message || '未知错误'}`)
       }
-      
-      data = bodyData?.data
 
-      biLog.info('播放地址响应:', {
-        statusCode: resp.statusCode,
-        apiCode: bodyData?.code,
-        hasData: !!data,
-        hasDash: !!data?.dash,
-        hasDurl: !!data?.durl,
-        dashAudioLength: data?.dash?.audio?.length,
-        durlLength: data?.durl?.length,
+      const simpleData = simpleBodyData?.data
+
+      biLog.info('旧版 API 响应:', {
+        statusCode: simpleResp.statusCode,
+        apiCode: simpleBodyData?.code,
+        hasData: !!simpleData,
+        hasDash: !!simpleData?.dash,
+        hasDurl: !!simpleData?.durl,
+        dashAudioLength: simpleData?.dash?.audio?.length,
+        durlLength: simpleData?.durl?.length,
       })
 
-      if (!data) {
-        biLog.warn('标准 API 响应数据为空，尝试 HTML5 模式')
-        throw new Error('标准 API 无数据')
+      if (simpleData) {
+        // 参考 MusicFree 插件：优先使用 dash.audio，按带宽排序选择音质
+        if (simpleData.dash && simpleData.dash.audio && simpleData.dash.audio.length > 0) {
+          const audios = simpleData.dash.audio
+          // 参考 MusicFree：按带宽升序排序，但我们选择最高音质（降序）
+          audios.sort((a, b) => (b.bandwidth || 0) - (a.bandwidth || 0))
+          const selectedAudio = audios[0]
+          // 参考 MusicFree：使用 baseUrl（注意驼峰命名）
+          let rawUrl = selectedAudio.baseUrl || selectedAudio.base_url ||
+                (selectedAudio.backup_url && selectedAudio.backup_url[0]) ||
+                (selectedAudio.backupUrl && selectedAudio.backupUrl[0])
+          
+          if (rawUrl) {
+            try {
+              url = decodeURIComponent(rawUrl)
+              if (url !== rawUrl) {
+                biLog.info('旧版 API URL 包含 Unicode 编码，已解码')
+              }
+            } catch (e) {
+              biLog.warn('旧版 API URL Unicode 解码失败，使用原始 URL')
+              url = rawUrl
+            }
+            
+            // 验证URL格式
+            if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+              biLog.warn('旧版 API 解码后的URL格式异常，尝试使用原始URL')
+              url = rawUrl
+            }
+            
+            biLog.info('旧版 API 成功获取播放地址（dash.audio）:', {
+              bandwidth: selectedAudio.bandwidth,
+              id: selectedAudio.id,
+              codecs: selectedAudio.codecs,
+              urlLength: url ? url.length : 0,
+            })
+          }
+        } else if (simpleData.durl && simpleData.durl.length > 0) {
+          // 参考 MusicFree：如果没有 dash，使用 durl
+          let rawUrl = simpleData.durl[0].url || simpleData.durl[0].backup_url?.[0]
+          if (rawUrl) {
+            try {
+              url = decodeURIComponent(rawUrl)
+              if (url !== rawUrl) {
+                biLog.info('旧版 API URL 包含 Unicode 编码，已解码')
+              }
+            } catch (e) {
+              biLog.warn('旧版 API URL Unicode 解码失败，使用原始 URL')
+              url = rawUrl
+            }
+            
+            // 验证URL格式
+            if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+              biLog.warn('旧版 API 解码后的URL格式异常，尝试使用原始URL')
+              url = rawUrl
+            }
+            
+            biLog.info('旧版 API 成功获取播放地址（durl）:', {
+              urlLength: url ? url.length : 0,
+              size: simpleData.durl[0].size,
+            })
+          }
+        }
+      }
+      
+      if (url) {
+        // 旧版 API 成功，直接返回
+        biLog.info('旧版 API 成功获取播放地址')
+        data = simpleData
+      } else {
+        throw new Error('旧版 API 无可用 URL')
+      }
+    } catch (simpleError) {
+      biLog.warn('旧版 API 失败，尝试新版 WBI API:', simpleError.message)
+    }
+
+    // 方案2: 如果旧版 API 失败，尝试新版 WBI API
+    if (!url) {
+      biLog.info('尝试使用新版 WBI API（需要签名）')
+      const params = {
+        ...(useBvid ? { bvid: useBvid } : { aid: useAid }),
+        ...(finalCid ? { cid: finalCid } : {}), // 如果有 cid 则使用 cid
+        ...(pageIndex !== null && !finalCid ? { page_index: pageIndex } : {}), // 如果没有 cid 且有 pageIndex 则使用 page_index
+        fnval: 16, // 请求 dash 格式（音视频分离）
+        fnver: 0, // 固定值
+        fourk: 0, // 默认不支持4K（需要大会员），设为0可获取更多可用清晰度
+        qn: 64, // 请求720P（如果无Cookie会自动降级到480P）
+      }
+      
+      // 确保至少提供了 cid 或 page_index 之一
+      if (!params.cid && pageIndex === null) {
+        biLog.error('缺少必要参数：cid 和 page_index 都不存在')
+        throw new Error('缺少必要参数：需要 cid 或 page_index')
       }
 
-      // 优先使用 dash.audio（音视频分离格式，纯音频流）
-      if (data.dash && data.dash.audio && data.dash.audio.length > 0) {
+      // 对播放参数进行 WBI 签名
+      let signedParams
+      try {
+        signedParams = await signWbi(params)
+      } catch (error) {
+        biLog.warn('播放接口 WBI 签名失败，使用原始参数:', error.message)
+        signedParams = params
+      }
+
+      // 尝试使用 WBI 签名的 API
+      const queryString = paramsToQuery(signedParams)
+      let playUrl = `https://api.bilibili.com/x/player/wbi/playurl?${queryString}`
+
+      biLog.info('新版 WBI API 请求 URL:', playUrl)
+      biLog.info('新版 WBI API 请求参数:', params)
+
+      try {
+        const requestObj = httpFetch(playUrl, {
+          method: 'GET',
+          headers: requestHeaders,
+        })
+
+        const resp = await requestObj.promise
+        
+        // 检查响应状态码
+        if (resp.statusCode !== 200) {
+          biLog.warn(`新版 WBI API 返回非 200 状态码: ${resp.statusCode}`)
+          throw new Error(`新版 WBI API 返回状态码: ${resp.statusCode}`)
+        }
+        
+        // 处理响应体
+        let bodyData = resp.body
+        if (typeof bodyData === 'string') {
+          try {
+            bodyData = JSON.parse(bodyData)
+          } catch (e) {
+            biLog.warn('新版 WBI API 解析响应 JSON 失败:', e)
+            throw new Error('新版 WBI API 响应数据格式错误')
+          }
+        }
+        
+        // 检查 API 返回的 code
+        if (bodyData?.code !== 0 && bodyData?.code !== undefined) {
+          biLog.warn('新版 WBI API 返回错误码:', bodyData.code, bodyData.message)
+          const errorMsg = bodyData.message || '未知错误'
+          // 检查是否是地区限制
+          if (errorMsg.includes('地区') || errorMsg.includes('区域') || errorMsg.includes('地区限制') || 
+              bodyData.code === -10403 || bodyData.code === -10404) {
+            // 不立即抛出错误，继续尝试其他方法
+            biLog.warn('检测到可能的地区限制，将尝试其他方法')
+          } else {
+            // 其他错误也继续尝试，不立即抛出
+            biLog.warn('新版 WBI API 返回错误，将尝试其他方法:', errorMsg)
+          }
+          throw new Error(`新版 WBI API 失败: ${errorMsg}`)
+        }
+        
+        data = bodyData?.data
+
+        biLog.info('新版 WBI API 播放地址响应:', {
+          statusCode: resp.statusCode,
+          apiCode: bodyData?.code,
+          hasData: !!data,
+          hasDash: !!data?.dash,
+          hasDurl: !!data?.durl,
+          dashAudioLength: data?.dash?.audio?.length,
+          durlLength: data?.durl?.length,
+        })
+
+        if (!data) {
+          biLog.warn('新版 WBI API 响应数据为空，尝试其他方法')
+          throw new Error('新版 WBI API 无数据')
+        }
+
+        // 优先使用 dash.audio（音视频分离格式，纯音频流）
+        if (data.dash && data.dash.audio && data.dash.audio.length > 0) {
         const audios = data.dash.audio
         // 按带宽排序，选择合适音质（带宽越大音质越好）
         audios.sort((a, b) => (b.bandwidth || 0) - (a.bandwidth || 0))
         const selectedAudio = audios[0]
         // 优先使用 base_url，如果没有则使用 backup_url 的第一个
-        url = selectedAudio.base_url || selectedAudio.baseUrl || 
+        let rawUrl = selectedAudio.base_url || selectedAudio.baseUrl || 
               (selectedAudio.backup_url && selectedAudio.backup_url[0]) ||
               (selectedAudio.backupUrl && selectedAudio.backupUrl[0])
         
         // 处理 URL 中的 Unicode 转义符
-        if (url) {
+        if (rawUrl) {
           try {
-            url = decodeURIComponent(url)
+            // 先尝试解码，如果失败则使用原始URL
+            url = decodeURIComponent(rawUrl)
+            // 如果解码后的URL和原始URL不同，说明有编码
+            if (url !== rawUrl) {
+              biLog.info('URL 包含 Unicode 编码，已解码')
+            }
           } catch (e) {
             // 如果解码失败，使用原始 URL
             biLog.warn('URL Unicode 解码失败，使用原始 URL')
+            url = rawUrl
+          }
+          
+          // 验证URL格式
+          if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+            biLog.warn('解码后的URL格式异常，尝试使用原始URL')
+            url = rawUrl
           }
         }
         
-        biLog.info('使用 dash.audio（纯音频流），选择音质:', {
-          bandwidth: selectedAudio.bandwidth,
-          id: selectedAudio.id,
-          codecs: selectedAudio.codecs,
-          hasUrl: !!url,
-        })
-      }
-      
-      // 如果没有音频流，使用视频流（视频流也包含音频，音视频混合）
-      if (!url && data.dash && data.dash.video && data.dash.video.length > 0) {
+          biLog.info('新版 WBI API 使用 dash.audio（纯音频流），选择音质:', {
+            bandwidth: selectedAudio.bandwidth,
+            id: selectedAudio.id,
+            codecs: selectedAudio.codecs,
+            hasUrl: !!url,
+            urlLength: url ? url.length : 0,
+          })
+        }
+        
+        // 如果没有音频流，使用视频流（视频流也包含音频，音视频混合）
+        if (!url && data.dash && data.dash.video && data.dash.video.length > 0) {
         const videos = data.dash.video
         // 按带宽排序，选择合适清晰度（带宽越大清晰度越好）
         videos.sort((a, b) => (b.bandwidth || 0) - (a.bandwidth || 0))
         const selectedVideo = videos[0]
         // 优先使用 base_url，如果没有则使用 backup_url 的第一个
-        url = selectedVideo.base_url || selectedVideo.baseUrl ||
+        let rawUrl = selectedVideo.base_url || selectedVideo.baseUrl ||
               (selectedVideo.backup_url && selectedVideo.backup_url[0]) ||
               (selectedVideo.backupUrl && selectedVideo.backupUrl[0])
         
         // 处理 URL 中的 Unicode 转义符
-        if (url) {
+        if (rawUrl) {
           try {
-            url = decodeURIComponent(url)
+            url = decodeURIComponent(rawUrl)
+            if (url !== rawUrl) {
+              biLog.info('URL 包含 Unicode 编码，已解码')
+            }
           } catch (e) {
             biLog.warn('URL Unicode 解码失败，使用原始 URL')
+            url = rawUrl
+          }
+          
+          // 验证URL格式
+          if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+            biLog.warn('解码后的URL格式异常，尝试使用原始URL')
+            url = rawUrl
           }
         }
         
-        biLog.info('使用 dash.video（音视频混合流），选择清晰度:', {
-          bandwidth: selectedVideo.bandwidth,
-          id: selectedVideo.id,
-          codecs: selectedVideo.codecs,
-          width: selectedVideo.width,
-          height: selectedVideo.height,
-          hasUrl: !!url,
-        })
-      }
-      
-      // 如果 DASH 格式都没有，降级使用 durl（FLV/MP4 格式，音视频混合）
-      if (!url && data.durl && data.durl.length > 0) {
+          biLog.info('新版 WBI API 使用 dash.video（音视频混合流），选择清晰度:', {
+            bandwidth: selectedVideo.bandwidth,
+            id: selectedVideo.id,
+            codecs: selectedVideo.codecs,
+            width: selectedVideo.width,
+            height: selectedVideo.height,
+            hasUrl: !!url,
+            urlLength: url ? url.length : 0,
+          })
+        }
+        
+        // 如果 DASH 格式都没有，降级使用 durl（FLV/MP4 格式，音视频混合）
+        if (!url && data.durl && data.durl.length > 0) {
         const durlItem = data.durl[0]
-        url = durlItem.url || durlItem.backup_url?.[0]
+        let rawUrl = durlItem.url || durlItem.backup_url?.[0]
         
         // 处理 URL 中的 Unicode 转义符
-        if (url) {
+        if (rawUrl) {
           try {
-            url = decodeURIComponent(url)
+            url = decodeURIComponent(rawUrl)
+            if (url !== rawUrl) {
+              biLog.info('URL 包含 Unicode 编码，已解码')
+            }
           } catch (e) {
             biLog.warn('URL Unicode 解码失败，使用原始 URL')
+            url = rawUrl
+          }
+          
+          // 验证URL格式
+          if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+            biLog.warn('解码后的URL格式异常，尝试使用原始URL')
+            url = rawUrl
           }
         }
         
-        biLog.info('使用 durl 格式（MP4/FLV，音视频混合），hasUrl:', !!url)
+          biLog.info('新版 WBI API 使用 durl 格式（MP4/FLV，音视频混合）:', {
+            hasUrl: !!url,
+            urlLength: url ? url.length : 0,
+            size: durlItem.size,
+          })
+        }
+        
+        if (url) {
+          biLog.info('新版 WBI API 成功获取播放地址')
+        }
+      } catch (wbiError) {
+        biLog.warn('新版 WBI API 请求失败，尝试其他方法:', wbiError.message)
       }
-    } catch (error) {
-      biLog.warn('标准 API 请求失败，尝试 HTML5 模式:', error.message)
     }
 
     // 如果标准 API 失败，尝试多个备用方案
     if (!url) {
       // 方案1: 尝试 HTML5 模式（参考 bilibili-api-ts 文档）
+      // html5: 是否以 html5 平台访问，链接少但可以直接播放
       biLog.info('尝试使用 HTML5 模式获取播放地址')
       const html5Params = {
         ...(useBvid ? { bvid: useBvid } : { aid: useAid }),
-        cid: finalCid,
-        html5: 1, // HTML5 平台访问
+        ...(finalCid ? { cid: finalCid } : {}), // 优先使用 cid
+        ...(pageIndex !== null && !finalCid ? { page_index: pageIndex } : {}), // 如果没有 cid 则使用 page_index
+        fnval: 16, // 请求 dash 格式
+        fnver: 0,
+        fourk: 0,
+        qn: 16, // HTML5 模式使用较低清晰度，提高成功率
       }
 
       // HTML5 模式也尝试使用 WBI 签名
@@ -385,7 +601,7 @@ async function getMusicUrl(songInfo, type) {
           try {
             html5BodyData = JSON.parse(html5BodyData)
           } catch (e) {
-            biLog.error('HTML5 模式解析响应 JSON 失败:', e)
+            biLog.warn('HTML5 模式解析响应 JSON 失败:', e)
             throw new Error('HTML5 模式响应数据格式错误')
           }
         }
@@ -421,7 +637,7 @@ async function getMusicUrl(songInfo, type) {
               try {
                 url = decodeURIComponent(url)
               } catch (e) {
-                console.warn('[Bilibili] HTML5 URL Unicode 解码失败，使用原始 URL')
+                biLog.warn('HTML5 URL Unicode 解码失败，使用原始 URL')
               }
             }
             
@@ -442,7 +658,7 @@ async function getMusicUrl(songInfo, type) {
               try {
                 url = decodeURIComponent(url)
               } catch (e) {
-                console.warn('[Bilibili] HTML5 URL Unicode 解码失败，使用原始 URL')
+                biLog.warn('HTML5 URL Unicode 解码失败，使用原始 URL')
               }
             }
             
@@ -459,7 +675,7 @@ async function getMusicUrl(songInfo, type) {
               try {
                 url = decodeURIComponent(url)
               } catch (e) {
-                console.warn('[Bilibili] HTML5 URL Unicode 解码失败，使用原始 URL')
+                biLog.warn('HTML5 URL Unicode 解码失败，使用原始 URL')
               }
             }
             
@@ -467,7 +683,7 @@ async function getMusicUrl(songInfo, type) {
           }
         }
       } catch (html5Error) {
-        biLog.error('HTML5 模式也失败:', html5Error.message)
+        biLog.warn('HTML5 模式也失败:', html5Error.message)
       }
 
       // 方案2: 尝试旧版 API（不使用 WBI 签名，可能对某些视频有效）
@@ -501,7 +717,7 @@ async function getMusicUrl(songInfo, type) {
             try {
               oldBodyData = JSON.parse(oldBodyData)
             } catch (e) {
-              biLog.error('旧版 API 解析响应 JSON 失败:', e)
+              biLog.warn('旧版 API 解析响应 JSON 失败:', e)
               throw new Error('旧版 API 响应数据格式错误')
             }
           }
@@ -543,7 +759,7 @@ async function getMusicUrl(songInfo, type) {
             }
           }
         } catch (oldError) {
-          biLog.error('旧版 API 也失败:', oldError.message)
+          biLog.warn('旧版 API 也失败:', oldError.message)
         }
       }
 
@@ -585,7 +801,7 @@ async function getMusicUrl(songInfo, type) {
             try {
               lowQnBodyData = JSON.parse(lowQnBodyData)
             } catch (e) {
-              biLog.error('低清晰度模式解析响应 JSON 失败:', e)
+              biLog.warn('低清晰度模式解析响应 JSON 失败:', e)
               throw new Error('低清晰度模式响应数据格式错误')
             }
           }
@@ -626,7 +842,7 @@ async function getMusicUrl(songInfo, type) {
             }
           }
         } catch (lowQnError) {
-          biLog.error('低清晰度模式也失败:', lowQnError.message)
+          biLog.warn('低清晰度模式也失败:', lowQnError.message)
         }
       }
     }
@@ -667,8 +883,32 @@ async function getMusicUrl(songInfo, type) {
       throw new Error(errorMessage)
     }
 
-    biLog.info('成功获取播放地址，URL 长度:', url.length)
+    // 验证并清理 URL
+    if (url) {
+      // 移除可能的控制字符和多余空格
+      url = url.trim()
+      
+      // 检查 URL 格式
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        biLog.error('获取到的 URL 格式无效:', url.substring(0, 100))
+        throw new Error('获取到的播放地址格式无效')
+      }
+      
+      // 记录 URL 信息（不记录完整URL，避免日志过长）
+      biLog.info('成功获取播放地址:', {
+        urlLength: url.length,
+        urlPrefix: url.substring(0, 50) + '...',
+        hasQueryParams: url.includes('?'),
+        timestamp: new Date().toISOString(),
+      })
+    } else {
+      biLog.error('获取到的 URL 为空')
+      throw new Error('获取到的播放地址为空')
+    }
+    
     // 返回 URL（移动端可能需要特殊处理 headers）
+    // 注意：B站播放URL可能需要 Referer，但 TrackPlayer 只支持 userAgent
+    // 如果播放失败，可能需要重新获取URL
     return url
   } catch (error) {
     biLog.error('getMusicUrl error:', error.message || error)
