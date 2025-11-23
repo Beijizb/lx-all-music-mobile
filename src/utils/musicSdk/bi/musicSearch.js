@@ -51,38 +51,55 @@ const searchHeaders = {
 
 let cookie = null
 
-// 获取 Cookie
+// 获取 Cookie - 添加重试和备选方案
 async function getCookie() {
   if (cookie) {
     return cookie
   }
+  
   try {
     const requestObj = httpFetch('https://api.bilibili.com/x/frontend/finger/spi', {
       method: 'GET',
       headers: {
         'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1 Edg/114.0.0.0',
       },
+      timeout: 5000,
     })
     const resp = await requestObj.promise
     const data = resp.body?.data
-    if (data) {
+    if (data?.b_3 && data?.b_4) {
       cookie = data
+      biLog.info('成功获取B站Cookie')
       return cookie
     }
   } catch (error) {
-    biLog.error('getCookie error:', error.message || error)
+    biLog.warn('获取Cookie失败:', error.message || error)
   }
-  return null
+  
+  // 备选：使用默认值（某些情况下可能不需要Cookie也能搜索）
+  biLog.warn('使用默认Cookie值（可能影响搜索功能）')
+  cookie = { b_3: 'default_buvid3', b_4: 'default_buvid4' }
+  return cookie
 }
 
-// 将时长转换为秒数
+// 将时长转换为秒数（改进版，支持多种格式）
 function durationToSec(duration) {
   if (typeof duration === 'number') {
     return duration
   }
   if (typeof duration === 'string') {
-    const dur = duration.split(':')
-    return dur.reduce((prev, curr) => 60 * prev + +curr, 0)
+    // 处理 "48:28" 或 "1:48:28" 格式
+    const parts = duration.split(':').map(part => parseInt(part) || 0)
+    if (parts.length === 2) {
+      // 分:秒 → 秒
+      return parts[0] * 60 + parts[1]
+    } else if (parts.length === 3) {
+      // 时:分:秒 → 秒
+      return parts[0] * 3600 + parts[1] * 60 + parts[2]
+    }
+    // 尝试直接解析为数字
+    const num = parseInt(duration)
+    if (!isNaN(num)) return num
   }
   return 0
 }
@@ -180,23 +197,18 @@ export default {
       await getCookie()
       const pageSize = limit || this.limit
 
+      // 优化后的搜索参数
       const params = {
-        context: '',
-        page: page,
-        order: '',
-        page_size: pageSize,
         keyword: str,
-        duration: '',
-        tids_1: '',
-        tids_2: '',
-        __refresh__: true,
-        _extra: '',
+        search_type: 'video',
+        page: page,
+        page_size: pageSize || 20,
+        order: 'totalrank', // 默认排序规则：综合排序
+        duration: 0, // 0=全部时长
+        tids: 0, // 0=全部分区
+        platform: 'web', // 使用web平台
         highlight: 1,
         single_column: 0,
-        platform: 'pc',
-        from_source: '',
-        search_type: 'video',
-        dynamic_offset: 0,
       }
 
       const cookieStr = cookie ? `buvid3=${cookie.b_3};buvid4=${cookie.b_4}` : ''
@@ -271,91 +283,116 @@ export default {
   },
 
   handleResult(rawList) {
-    if (!rawList || !Array.isArray(rawList)) return []
+    if (!rawList || !Array.isArray(rawList)) {
+      biLog.warn('handleResult: rawList 不是有效数组')
+      return []
+    }
 
-    return rawList
+    const validResults = rawList
       .map((item, index) => {
         // 提取 bvid 或 aid
         const { bvid, aid } = extractBvidOrAid(item)
         
-        // 如果既没有 bvid 也没有 aid，跳过这个结果
+        // 更严格的验证：必须要有 bvid 或 aid
         if (!bvid && !aid) {
-          // 添加调试信息，帮助排查问题
-          if (index < 5) {
-            biLog.warn('跳过无效结果（缺少 bvid 和 aid）:', {
-              title: item.title,
-              itemKeys: Object.keys(item),
-              bvid: item.bvid,
-              aid: item.aid,
-              arcurl: item.arcurl,
-              url: item.url,
-              cid: item.cid,
+          if (index < 3) {
+            biLog.warn('跳过无效结果（缺少有效标识）:', {
+              title: item.title?.substring(0, 50),
+              hasBvid: !!item.bvid,
+              hasAid: !!item.aid,
+              hasArcurl: !!item.arcurl,
             })
           }
           return null
         }
 
-        const title = item.title?.replace(/(<em(.*?)>)|(<\/em>)/g, '') || ''
+        // 清理标题中的HTML标签
+        const title = item.title?.replace(/<[^>]*>/g, '') || '未知标题'
         const duration = durationToSec(item.duration)
+        
+        // 关键修复：不要使用CID作为musicId，使用BV号或AV号
+        // 同一个视频的不同分P会有不同的CID，但BV号相同
+        const musicId = bvid || aid
+        if (!musicId) {
+          biLog.warn('无法生成有效的musicId，跳过结果')
+          return null
+        }
 
-        // 参考 bb.js 的实现，id 优先级：cid > bvid > aid
-        const musicId = item.cid || bvid || aid || `bi_${Math.random()}`
+        // 验证封面URL
+        let coverUrl = item.pic
+        if (coverUrl?.startsWith('//')) {
+          coverUrl = `https:${coverUrl}`
+        } else if (!coverUrl || !coverUrl.startsWith('http')) {
+          coverUrl = null
+        }
 
-        // 确保 bvid 和 aid 是字符串类型，且不为空
-        // extractBvidOrAid 已经确保返回的是有效的字符串或 null，这里再次验证
-        const metaBvid = bvid && typeof bvid === 'string' && bvid.trim() ? bvid.trim() : undefined
-        const metaAid = aid && (typeof aid === 'string' || typeof aid === 'number') && String(aid).trim() ? String(aid).trim() : undefined
-        const metaCid = item.cid ? String(item.cid).trim() : undefined
+        // 验证作者信息
+        const author = item.author || item.owner?.name || item.owner?.mid || '未知UP主'
 
-        // 添加调试信息（前3个结果）
+        // 记录处理信息（前3个结果）
         if (index < 3) {
           biLog.info(`处理搜索结果 ${index + 1}:`, {
-            title,
-            extractedBvid: bvid,
-            extractedAid: aid,
-            finalBvid: metaBvid,
-            finalAid: metaAid,
-            cid: metaCid,
+            title: title.substring(0, 30),
+            bvid,
+            aid,
+            author,
+            duration,
+            hasCover: !!coverUrl,
             musicId,
           })
         }
 
         return {
-          singer: item.author || item.owner?.name || '未知UP主',
+          singer: author,
           name: title,
           source: 'bi',
           interval: secToDuration(duration),
-          songmid: musicId,
-          img: item.pic?.startsWith('//') ? `http:${item.pic}` : item.pic || null,
+          songmid: musicId, // 使用BV/AV号，不是CID
+          img: coverUrl,
           types: [{ type: '128k', size: null }],
           _types: { '128k': {} },
           typeUrl: {},
           meta: {
-            songId: metaBvid || metaAid || musicId || '',
-            albumName: metaBvid || metaAid || '',
-            picUrl: item.pic?.startsWith('//') ? `http:${item.pic}` : item.pic || null,
+            songId: musicId, // 存储主要标识（BV/AV号）
+            albumName: title.substring(0, 20),
+            picUrl: coverUrl,
             qualitys: [{ type: '128k', size: null }],
             _qualitys: { '128k': {} },
-            // 确保这些字段存在且有效
-            ...(metaBvid ? { bvid: metaBvid } : {}),
-            ...(metaAid ? { aid: metaAid } : {}),
-            ...(metaCid ? { cid: metaCid } : {}),
+            // 确保标识字段正确
+            ...(bvid ? { bvid } : {}),
+            ...(aid ? { aid } : {}),
+            // 注意：不在这里存储cid，播放时会重新获取
           },
         }
       })
-      .filter((item) => item !== null) // 过滤掉无效结果
+      .filter(item => item !== null)
+
+    biLog.info(`搜索结果处理完成: ${validResults.length}/${rawList.length} 有效`)
+    return validResults
   },
 
   search(str, page = 1, limit, retryNum = 0) {
-    if (++retryNum > 3) return Promise.reject(new Error('try max num'))
+    if (++retryNum > 3) {
+      biLog.error('搜索重试次数超限')
+      return Promise.reject(new Error('搜索失败，请检查网络或关键词'))
+    }
+    
     if (limit == null) limit = this.limit
+    
     return this.musicSearch(str, page, limit)
       .then((result) => {
-        const list = this.handleResult(result.result || [])
+        if (!result || !result.result) {
+          throw new Error('搜索结果为空')
+        }
+        
+        const list = this.handleResult(result.result)
+        
         if (!list || list.length === 0) {
+          biLog.warn(`第${page}页搜索结果为空，关键词: "${str}"`)
           if (retryNum < 3) {
             return this.search(str, page, limit, retryNum)
           }
+          // 返回空结果而不是错误
           return {
             list: [],
             allPage: 1,
@@ -367,8 +404,10 @@ export default {
 
         this.total = result.numResults || list.length
         this.page = page
-        this.allPage = Math.ceil(this.total / this.limit)
-
+        this.allPage = Math.ceil(this.total / this.limit) || 1
+        
+        biLog.info(`搜索成功: "${str}" 第${page}页, 共${list.length}条结果`)
+        
         return {
           list,
           allPage: this.allPage,
@@ -378,9 +417,14 @@ export default {
         }
       })
       .catch((err) => {
-        biLog.info('搜索错误，准备重试:', err.message, '次数:', retryNum)
+        biLog.error(`搜索错误 (${retryNum}/3):`, err.message)
         if (retryNum < 3) {
-          return this.search(str, page, limit, retryNum)
+          // 延迟重试
+          return new Promise(resolve => {
+            setTimeout(() => {
+              resolve(this.search(str, page, limit, retryNum))
+            }, 1000 * retryNum)
+          })
         }
         return Promise.reject(err)
       })

@@ -1113,27 +1113,92 @@ async function getMusicUrl(songInfo, type) {
       throw new Error('获取到的播放地址为空')
     }
     
-    // 最终验证返回的URL
+    // 最终验证和修复返回的URL
     if (!url || typeof url !== 'string') {
       biLog.error('最终URL验证失败: URL为空或不是字符串', { url, type: typeof url })
       throw new Error('获取到的播放地址为空或格式错误')
     }
     
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      const urlPreview = url.length > 100 ? url.substring(0, 100) + '...' : url
+    // 修复URL格式问题 - 确保是有效的m4s或mp4链接
+    let finalUrl = url.trim()
+    
+    // 检查并修复路径中的扩展名问题（.m? -> .m4s?）
+    if (finalUrl.includes('.m?') && !finalUrl.includes('.m4s?')) {
+      // 将 .m? 替换为 .m4s? 但保留查询参数
+      finalUrl = finalUrl.replace(/\.m(\?|$)/, '.m4s$1')
+      biLog.info('修复URL扩展名: .m -> .m4s', {
+        original: url.substring(0, 100),
+        fixed: finalUrl.substring(0, 100),
+      })
+    }
+    
+    // 检查是否还有其他需要修复的扩展名问题
+    // 如果URL以 .m 结尾（没有查询参数），也尝试修复
+    if (finalUrl.match(/\.m$/i) && !finalUrl.match(/\.m4s$/i)) {
+      finalUrl = finalUrl.replace(/\.m$/i, '.m4s')
+      biLog.info('修复URL扩展名: .m -> .m4s (无查询参数)')
+    }
+    
+    // 最终验证URL格式
+    if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+      const urlPreview = finalUrl.length > 100 ? finalUrl.substring(0, 100) + '...' : finalUrl
       biLog.error('最终URL验证失败: URL格式无效', { url: urlPreview })
       throw new Error('获取到的播放地址格式无效')
     }
     
-    // 返回 URL（移动端可能需要特殊处理 headers）
-    // 注意：B站播放URL可能需要 Referer，但 TrackPlayer 只支持 userAgent
-    // 如果播放失败，系统会自动重试2次刷新URL
-    // 如果仍然失败，可能是：
-    // 1. URL需要Referer header（TrackPlayer不支持）
-    // 2. URL有时效性，已过期
-    // 3. 网络问题或地区限制
-    biLog.info('准备返回播放URL，如果播放失败将自动重试')
-    return url
+    // 记录修复后的URL信息
+    biLog.info('成功获取并修复播放地址:', {
+      urlLength: finalUrl.length,
+      urlPreview: finalUrl.length > 150 ? finalUrl.substring(0, 150) + '...' : finalUrl,
+      hasM4s: finalUrl.includes('.m4s'),
+      hasQueryParams: finalUrl.includes('?'),
+    })
+    
+    // 可选：添加URL有效性检查（使用HEAD请求验证）
+    // 注意：某些CDN可能不支持HEAD请求，所以验证失败不影响URL返回
+    try {
+      const testRequest = httpFetch(finalUrl, {
+        method: 'HEAD',
+        headers: playHeaders,
+        timeout: 8000, // 8秒超时，避免阻塞太久
+      })
+      
+      // 使用Promise.race确保不会阻塞太久
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('验证超时')), 5000)
+      })
+      
+      const testResponse = await Promise.race([
+        testRequest.promise,
+        timeoutPromise,
+      ])
+      
+      if (testResponse && testResponse.statusCode === 200) {
+        biLog.info('URL有效性验证通过', {
+          statusCode: testResponse.statusCode,
+          urlPreview: finalUrl.substring(0, 100),
+        })
+      } else {
+        biLog.warn('URL有效性验证返回非200状态码:', {
+          statusCode: testResponse?.statusCode,
+          urlPreview: finalUrl.substring(0, 100),
+        })
+      }
+    } catch (testError) {
+      // 验证失败不影响URL返回，因为：
+      // 1. 某些CDN可能拒绝HEAD请求
+      // 2. 流媒体URL可能不支持HEAD请求
+      // 3. 网络问题可能导致验证失败，但URL本身可能有效
+      biLog.warn('URL有效性验证失败，但继续返回URL（这是正常的）:', {
+        error: testError.message || testError,
+        urlPreview: finalUrl.substring(0, 100),
+        note: '某些CDN或流媒体URL不支持HEAD请求，这不影响播放',
+      })
+    }
+    
+    // 返回修复后的URL
+    // 注意：这里返回字符串，外部会包装成对象
+    return finalUrl
   } catch (error) {
     // 记录详细的错误信息，包括堆栈
     biLog.error('getMusicUrl error:', {
@@ -1158,11 +1223,40 @@ const bi = {
             biLog.error('getMusicUrl 返回了无效的URL:', { url, type: typeof url })
             throw new Error('获取到的播放地址无效')
           }
-          if (!url.startsWith('http://') && !url.startsWith('https://')) {
-            biLog.error('getMusicUrl 返回的URL格式无效:', url.substring(0, 100))
+          
+          // 再次修复URL格式问题（双重保险）
+          let finalUrl = url.trim()
+          
+          // 检查并修复路径中的扩展名问题
+          if (finalUrl.includes('.m?') && !finalUrl.includes('.m4s?')) {
+            // 将 .m? 替换为 .m4s? 但保留查询参数
+            finalUrl = finalUrl.replace(/\.m(\?|$)/, '.m4s$1')
+            biLog.info('外层修复URL扩展名: .m -> .m4s')
+          }
+          
+          // 检查是否还有其他需要修复的扩展名问题
+          if (finalUrl.match(/\.m$/i) && !finalUrl.match(/\.m4s$/i)) {
+            finalUrl = finalUrl.replace(/\.m$/i, '.m4s')
+            biLog.info('外层修复URL扩展名: .m -> .m4s (无查询参数)')
+          }
+          
+          // 最终验证URL格式
+          if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+            biLog.error('最终URL格式无效:', finalUrl.substring(0, 100))
             throw new Error('获取到的播放地址格式无效')
           }
-          return { type, url }
+          
+          biLog.info('准备返回播放信息:', {
+            urlLength: finalUrl.length,
+            urlPreview: finalUrl.length > 100 ? finalUrl.substring(0, 100) + '...' : finalUrl,
+            type,
+            hasM4s: finalUrl.includes('.m4s'),
+          })
+          
+          // 返回包含type和url的对象
+          // 注意：根据代码库中的使用方式，返回格式应该是 { type, url }
+          // 如果需要headers，可以在track构建时添加
+          return { type, url: finalUrl }
         })
         .catch((error) => {
           // 记录详细的错误信息
