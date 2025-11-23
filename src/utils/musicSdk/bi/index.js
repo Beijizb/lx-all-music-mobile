@@ -353,11 +353,11 @@ async function getMusicUrl(songInfo, type) {
       })
 
       if (simpleData) {
-        // 参考 MusicFree 插件：优先使用 dash.audio，按带宽排序选择音质
+        // 参考 MusicFree 插件：优先使用 dash.audio，选择最低画质（128k）
         if (simpleData.dash && simpleData.dash.audio && simpleData.dash.audio.length > 0) {
           const audios = simpleData.dash.audio
-          // 参考 MusicFree：按带宽升序排序，但我们选择最高音质（降序）
-          audios.sort((a, b) => (b.bandwidth || 0) - (a.bandwidth || 0))
+          // 按带宽升序排序，选择最低画质（节省流量）
+          audios.sort((a, b) => (a.bandwidth || 0) - (b.bandwidth || 0))
           const selectedAudio = audios[0]
           // 参考 MusicFree：使用 baseUrl（注意驼峰命名）
           let rawUrl = selectedAudio.baseUrl || selectedAudio.base_url ||
@@ -381,7 +381,7 @@ async function getMusicUrl(songInfo, type) {
               url = rawUrl
             }
             
-            biLog.info('旧版 API 成功获取播放地址（dash.audio）:', {
+            biLog.info('旧版 API 成功获取播放地址（dash.audio，最低画质）:', {
               bandwidth: selectedAudio.bandwidth,
               id: selectedAudio.id,
               codecs: selectedAudio.codecs,
@@ -523,8 +523,8 @@ async function getMusicUrl(songInfo, type) {
         // 优先使用 dash.audio（音视频分离格式，纯音频流）
         if (data.dash && data.dash.audio && data.dash.audio.length > 0) {
         const audios = data.dash.audio
-        // 按带宽排序，选择合适音质（带宽越大音质越好）
-        audios.sort((a, b) => (b.bandwidth || 0) - (a.bandwidth || 0))
+        // 按带宽升序排序，选择最低画质（128k，节省流量）
+        audios.sort((a, b) => (a.bandwidth || 0) - (b.bandwidth || 0))
         const selectedAudio = audios[0]
         // 优先使用 base_url，如果没有则使用 backup_url 的第一个
         let rawUrl = selectedAudio.base_url || selectedAudio.baseUrl || 
@@ -532,33 +532,45 @@ async function getMusicUrl(songInfo, type) {
               (selectedAudio.backupUrl && selectedAudio.backupUrl[0])
         
         // 处理 URL 中的 Unicode 转义符
-        if (rawUrl) {
+        if (rawUrl && typeof rawUrl === 'string') {
           try {
             // 先尝试解码，如果失败则使用原始URL
-            url = decodeURIComponent(rawUrl)
-            // 如果解码后的URL和原始URL不同，说明有编码
-            if (url !== rawUrl) {
-              biLog.info('URL 包含 Unicode 编码，已解码')
+            const decodedUrl = decodeURIComponent(rawUrl)
+            // 验证解码后的URL格式
+            if (decodedUrl && (decodedUrl.startsWith('http://') || decodedUrl.startsWith('https://'))) {
+              url = decodedUrl
+              // 如果解码后的URL和原始URL不同，说明有编码
+              if (url !== rawUrl) {
+                biLog.info('URL 包含 Unicode 编码，已解码')
+              }
+            } else {
+              // 解码后的URL格式异常，使用原始URL
+              biLog.warn('解码后的URL格式异常，使用原始URL')
+              url = rawUrl
             }
           } catch (e) {
             // 如果解码失败，使用原始 URL
-            biLog.warn('URL Unicode 解码失败，使用原始 URL')
+            biLog.warn('URL Unicode 解码失败，使用原始 URL:', e.message || e)
             url = rawUrl
           }
           
-          // 验证URL格式
-          if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
-            biLog.warn('解码后的URL格式异常，尝试使用原始URL')
+          // 最终验证URL格式
+          if (url && typeof url === 'string' && !url.startsWith('http://') && !url.startsWith('https://')) {
+            biLog.warn('URL格式异常，尝试使用原始URL')
             url = rawUrl
           }
+        } else if (rawUrl) {
+          // rawUrl存在但不是字符串，转换为字符串
+          url = String(rawUrl)
         }
         
-          biLog.info('新版 WBI API 使用 dash.audio（纯音频流），选择音质:', {
+          biLog.info('新版 WBI API 使用 dash.audio（纯音频流），选择最低画质:', {
             bandwidth: selectedAudio.bandwidth,
             id: selectedAudio.id,
             codecs: selectedAudio.codecs,
             hasUrl: !!url,
             urlLength: url ? url.length : 0,
+            note: '已选择最低画质以节省流量',
           })
         }
         
@@ -574,22 +586,31 @@ async function getMusicUrl(songInfo, type) {
               (selectedVideo.backupUrl && selectedVideo.backupUrl[0])
         
         // 处理 URL 中的 Unicode 转义符
-        if (rawUrl) {
+        if (rawUrl && typeof rawUrl === 'string') {
           try {
-            url = decodeURIComponent(rawUrl)
-            if (url !== rawUrl) {
-              biLog.info('URL 包含 Unicode 编码，已解码')
+            const decodedUrl = decodeURIComponent(rawUrl)
+            // 验证解码后的URL格式
+            if (decodedUrl && (decodedUrl.startsWith('http://') || decodedUrl.startsWith('https://'))) {
+              url = decodedUrl
+              if (url !== rawUrl) {
+                biLog.info('URL 包含 Unicode 编码，已解码')
+              }
+            } else {
+              biLog.warn('解码后的URL格式异常，使用原始URL')
+              url = rawUrl
             }
           } catch (e) {
-            biLog.warn('URL Unicode 解码失败，使用原始 URL')
+            biLog.warn('URL Unicode 解码失败，使用原始 URL:', e.message || e)
             url = rawUrl
           }
           
-          // 验证URL格式
-          if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
-            biLog.warn('解码后的URL格式异常，尝试使用原始URL')
+          // 最终验证URL格式
+          if (url && typeof url === 'string' && !url.startsWith('http://') && !url.startsWith('https://')) {
+            biLog.warn('URL格式异常，尝试使用原始URL')
             url = rawUrl
           }
+        } else if (rawUrl) {
+          url = String(rawUrl)
         }
         
           biLog.info('新版 WBI API 使用 dash.video（音视频混合流），选择清晰度:', {
@@ -609,22 +630,31 @@ async function getMusicUrl(songInfo, type) {
         let rawUrl = durlItem.url || durlItem.backup_url?.[0]
         
         // 处理 URL 中的 Unicode 转义符
-        if (rawUrl) {
+        if (rawUrl && typeof rawUrl === 'string') {
           try {
-            url = decodeURIComponent(rawUrl)
-            if (url !== rawUrl) {
-              biLog.info('URL 包含 Unicode 编码，已解码')
+            const decodedUrl = decodeURIComponent(rawUrl)
+            // 验证解码后的URL格式
+            if (decodedUrl && (decodedUrl.startsWith('http://') || decodedUrl.startsWith('https://'))) {
+              url = decodedUrl
+              if (url !== rawUrl) {
+                biLog.info('URL 包含 Unicode 编码，已解码')
+              }
+            } else {
+              biLog.warn('解码后的URL格式异常，使用原始URL')
+              url = rawUrl
             }
           } catch (e) {
-            biLog.warn('URL Unicode 解码失败，使用原始 URL')
+            biLog.warn('URL Unicode 解码失败，使用原始 URL:', e.message || e)
             url = rawUrl
           }
           
-          // 验证URL格式
-          if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
-            biLog.warn('解码后的URL格式异常，尝试使用原始URL')
+          // 最终验证URL格式
+          if (url && typeof url === 'string' && !url.startsWith('http://') && !url.startsWith('https://')) {
+            biLog.warn('URL格式异常，尝试使用原始URL')
             url = rawUrl
           }
+        } else if (rawUrl) {
+          url = String(rawUrl)
         }
         
           biLog.info('新版 WBI API 使用 durl 格式（MP4/FLV，音视频混合）:', {
@@ -708,7 +738,8 @@ async function getMusicUrl(songInfo, type) {
           // HTML5 模式优先使用音频流
           if (html5Data.dash && html5Data.dash.audio && html5Data.dash.audio.length > 0) {
             const audios = html5Data.dash.audio
-            audios.sort((a, b) => (b.bandwidth || 0) - (a.bandwidth || 0))
+            // 选择最低画质（128k，节省流量）
+            audios.sort((a, b) => (a.bandwidth || 0) - (b.bandwidth || 0))
             const selectedAudio = audios[0]
             url = selectedAudio.base_url || selectedAudio.baseUrl ||
                   (selectedAudio.backup_url && selectedAudio.backup_url[0]) ||
@@ -723,7 +754,7 @@ async function getMusicUrl(songInfo, type) {
               }
             }
             
-            biLog.info('HTML5 模式使用 dash.audio（纯音频流），hasUrl:', !!url)
+            biLog.info('HTML5 模式使用 dash.audio（纯音频流，最低画质），hasUrl:', !!url)
           }
           
           // 如果没有音频流，使用视频流（音视频混合）
@@ -815,7 +846,8 @@ async function getMusicUrl(songInfo, type) {
             // 尝试提取 URL
             if (oldData.dash && oldData.dash.audio && oldData.dash.audio.length > 0) {
               const audios = oldData.dash.audio
-              audios.sort((a, b) => (b.bandwidth || 0) - (a.bandwidth || 0))
+              // 选择最低画质（128k，节省流量）
+              audios.sort((a, b) => (a.bandwidth || 0) - (b.bandwidth || 0))
               const selectedAudio = audios[0]
               url = selectedAudio.base_url || selectedAudio.baseUrl ||
                     (selectedAudio.backup_url && selectedAudio.backup_url[0]) ||
@@ -898,7 +930,8 @@ async function getMusicUrl(songInfo, type) {
             const lowQnData = lowQnBodyData.data
             if (lowQnData.dash && lowQnData.dash.audio && lowQnData.dash.audio.length > 0) {
               const audios = lowQnData.dash.audio
-              audios.sort((a, b) => (b.bandwidth || 0) - (a.bandwidth || 0))
+              // 选择最低画质（128k，节省流量）
+              audios.sort((a, b) => (a.bandwidth || 0) - (b.bandwidth || 0))
               const selectedAudio = audios[0]
               url = selectedAudio.base_url || selectedAudio.baseUrl ||
                     (selectedAudio.backup_url && selectedAudio.backup_url[0]) ||
@@ -979,8 +1012,14 @@ async function getMusicUrl(songInfo, type) {
       url = url.trim()
       
       // 检查 URL 格式
+      if (!url || typeof url !== 'string') {
+        biLog.error('获取到的 URL 为空或不是字符串')
+        throw new Error('获取到的播放地址为空')
+      }
+      
       if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        biLog.error('获取到的 URL 格式无效:', url.substring(0, 100))
+        const urlPreview = url && url.length > 0 ? (url.length > 100 ? url.substring(0, 100) + '...' : url) : '空URL'
+        biLog.error('获取到的 URL 格式无效:', urlPreview)
         throw new Error('获取到的播放地址格式无效')
       }
       
@@ -1023,9 +1062,14 @@ async function getMusicUrl(songInfo, type) {
         
         // 记录完整的URL信息（用于排查问题）
         // 注意：记录完整URL的前200个字符和后50个字符，便于排查问题
-        const urlPreview = url.length > 250 
-          ? url.substring(0, 200) + '...' + url.substring(url.length - 50)
-          : url
+        let urlPreview = url
+        try {
+          if (url && url.length > 250) {
+            urlPreview = url.substring(0, 200) + '...' + (url.length > 50 ? url.substring(url.length - 50) : url)
+          }
+        } catch (e) {
+          urlPreview = url ? (url.length > 100 ? url.substring(0, 100) + '...' : url) : '无法预览URL'
+        }
         
         // 记录完整的URL（用于排查播放失败问题）
         // 如果播放失败，可以手动测试这个URL是否真的可以访问
@@ -1049,16 +1093,36 @@ async function getMusicUrl(songInfo, type) {
         })
       } else {
         biLog.warn('URL 解析失败，但继续使用原始URL')
+        let urlPrefix = '无法预览'
+        try {
+          if (url && typeof url === 'string' && url.length > 0) {
+            urlPrefix = url.length > 80 ? url.substring(0, 80) + '...' : url
+          }
+        } catch (e) {
+          // 忽略错误
+        }
         biLog.info('成功获取播放地址（未解析）:', {
-          urlLength: url.length,
-          urlPrefix: url.substring(0, 80) + '...',
-          hasQueryParams: url.includes('?'),
+          urlLength: url ? url.length : 0,
+          urlPrefix,
+          hasQueryParams: url ? url.includes('?') : false,
           timestamp: new Date().toISOString(),
         })
       }
     } else {
       biLog.error('获取到的 URL 为空')
       throw new Error('获取到的播放地址为空')
+    }
+    
+    // 最终验证返回的URL
+    if (!url || typeof url !== 'string') {
+      biLog.error('最终URL验证失败: URL为空或不是字符串', { url, type: typeof url })
+      throw new Error('获取到的播放地址为空或格式错误')
+    }
+    
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      const urlPreview = url.length > 100 ? url.substring(0, 100) + '...' : url
+      biLog.error('最终URL验证失败: URL格式无效', { url: urlPreview })
+      throw new Error('获取到的播放地址格式无效')
     }
     
     // 返回 URL（移动端可能需要特殊处理 headers）
@@ -1071,7 +1135,14 @@ async function getMusicUrl(songInfo, type) {
     biLog.info('准备返回播放URL，如果播放失败将自动重试')
     return url
   } catch (error) {
-    biLog.error('getMusicUrl error:', error.message || error)
+    // 记录详细的错误信息，包括堆栈
+    biLog.error('getMusicUrl error:', {
+      message: error.message || String(error),
+      stack: error.stack,
+      name: error.name,
+      error: error,
+    })
+    // 确保错误被正确抛出
     throw error
   }
 }
@@ -1080,9 +1151,35 @@ const bi = {
   musicSearch,
   getMusicUrl(songInfo, type) {
     return {
-      promise: getMusicUrl(songInfo, type).then((url) => {
-        return { type, url }
-      }),
+      promise: getMusicUrl(songInfo, type)
+        .then((url) => {
+          // 验证返回的URL
+          if (!url || typeof url !== 'string') {
+            biLog.error('getMusicUrl 返回了无效的URL:', { url, type: typeof url })
+            throw new Error('获取到的播放地址无效')
+          }
+          if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            biLog.error('getMusicUrl 返回的URL格式无效:', url.substring(0, 100))
+            throw new Error('获取到的播放地址格式无效')
+          }
+          return { type, url }
+        })
+        .catch((error) => {
+          // 记录详细的错误信息
+          biLog.error('getMusicUrl 执行失败:', {
+            error: error.message || error,
+            stack: error.stack,
+            songInfo: {
+              id: songInfo?.id,
+              name: songInfo?.name,
+              source: songInfo?.source,
+              hasMeta: !!songInfo?.meta,
+            },
+            type,
+          })
+          // 重新抛出错误，让上层处理
+          throw error
+        }),
       canceleFn() {
         // 取消请求（如果需要）
       },
