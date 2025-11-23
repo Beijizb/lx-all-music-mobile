@@ -2,13 +2,18 @@
   "extends": "@react-native/typescript-config/tsconfig.json",
   "compilerOptions": {
     "module": "ESNext",
+    "moduleResolution": "node",
     "types": ["react-native"],
     "skipLibCheck": true,
     "baseUrl": "./",
     "lib": ["ES2015", "ES2017", "ES2018", "ES2019", "ES2020", "ES2021", "ESNext"],
     "paths": {
       "@/*": ["src/*"]
-    }
+    },
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
   },
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "build", "dist"]
 }

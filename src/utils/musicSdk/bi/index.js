@@ -29,6 +29,88 @@ const playHeaders = {
   origin: 'https://www.bilibili.com',
 }
 
+/**
+ * 安全的URL解析函数，兼容React Native环境
+ * React Native的URL API可能未完全实现protocol、hostname等属性
+ * 使用正则表达式作为降级方案
+ * 
+ * 此函数专门处理React Native环境中URL.protocol等属性未实现的情况
+ * 即使URL构造函数成功，访问protocol等属性也可能抛出异常
+ */
+function safeParseUrl(url) {
+  if (!url || typeof url !== 'string') {
+    return null
+  }
+
+  // 首先尝试使用正则表达式解析（最安全的方式）
+  // 这样可以避免任何URL API兼容性问题
+  const protocol = getProtocol(url)
+  const hostname = getHostname(url)
+  const pathname = getPathname(url)
+  const search = getSearch(url)
+
+  const result = {
+    protocol,
+    hostname,
+    pathname,
+    search,
+    href: url,
+    searchParams: null,
+  }
+
+  // 尝试使用标准URL API获取searchParams（如果可用）
+  // 但即使失败也不影响主要功能
+  try {
+    const urlObj = new URL(url)
+    // 安全地尝试获取searchParams
+    if (urlObj && typeof urlObj.searchParams !== 'undefined') {
+      try {
+        result.searchParams = urlObj.searchParams
+      } catch (e) {
+        // searchParams不可用，忽略
+        result.searchParams = null
+      }
+    }
+  } catch (error) {
+    // URL构造函数失败，完全使用正则降级（这是正常的）
+    // 不记录警告，因为我们已经有了降级方案
+  }
+
+  return result
+}
+
+/**
+ * 使用正则表达式获取URL协议
+ */
+function getProtocol(url) {
+  const match = url.match(/^(https?):/i)
+  return match ? match[1] + ':' : 'https:'
+}
+
+/**
+ * 使用正则表达式获取URL主机名
+ */
+function getHostname(url) {
+  const match = url.match(/^https?:\/\/([^\/\?#]+)/i)
+  return match ? match[1] : ''
+}
+
+/**
+ * 使用正则表达式获取URL路径
+ */
+function getPathname(url) {
+  const match = url.match(/^https?:\/\/[^\/]+(\/[^\?#]*)/i)
+  return match ? match[1] : '/'
+}
+
+/**
+ * 使用正则表达式获取URL查询字符串
+ */
+function getSearch(url) {
+  const match = url.match(/\?([^#]*)/)
+  return match ? '?' + match[1] : ''
+}
+
 // 获取音乐 URL
 async function getMusicUrl(songInfo, type) {
   try {
@@ -905,21 +987,35 @@ async function getMusicUrl(songInfo, type) {
       // B站播放URL可能需要特殊处理
       // 1. 确保URL中没有未编码的特殊字符
       // 2. 检查URL是否包含必要的参数
-      try {
-        // 尝试解析URL，确保格式正确
-        const urlObj = new URL(url)
+      // 使用安全的URL解析函数，兼容React Native环境
+      const urlObj = safeParseUrl(url)
+      
+      if (urlObj) {
+        // 安全地获取searchParams数量
+        let searchParamsCount = 0
+        try {
+          if (urlObj.searchParams) {
+            searchParamsCount = Array.from(urlObj.searchParams.keys()).length
+          }
+        } catch (e) {
+          // searchParams不可用，忽略
+          searchParamsCount = 0
+        }
+
         biLog.info('URL 解析成功:', {
           protocol: urlObj.protocol,
           hostname: urlObj.hostname,
-          pathname: urlObj.pathname.substring(0, 50),
-          hasSearch: urlObj.search.length > 0,
-          searchParamsCount: urlObj.searchParams ? Array.from(urlObj.searchParams.keys()).length : 0,
+          pathname: urlObj.pathname ? urlObj.pathname.substring(0, 50) : '',
+          hasSearch: urlObj.search ? urlObj.search.length > 0 : false,
+          searchParamsCount,
         })
         
         // 检查是否是B站的CDN域名
-        const isBiliCdn = urlObj.hostname.includes('bilivideo.com') || 
-                          urlObj.hostname.includes('biliapi.com') ||
-                          urlObj.hostname.includes('bilibili.com')
+        const isBiliCdn = urlObj.hostname && (
+          urlObj.hostname.includes('bilivideo.com') || 
+          urlObj.hostname.includes('biliapi.com') ||
+          urlObj.hostname.includes('bilibili.com')
+        )
         
         if (!isBiliCdn) {
           biLog.warn('URL 不是B站CDN域名，可能无法播放:', urlObj.hostname)
@@ -951,8 +1047,8 @@ async function getMusicUrl(songInfo, type) {
           note: 'B站播放URL可能需要Referer header或特定地区IP',
           suggestion: '如果播放失败，请尝试：1) 使用VPN切换到日本或美国IP；2) 在浏览器中测试URL是否可访问',
         })
-      } catch (urlError) {
-        biLog.warn('URL 解析失败，但继续使用原始URL:', urlError.message)
+      } else {
+        biLog.warn('URL 解析失败，但继续使用原始URL')
         biLog.info('成功获取播放地址（未解析）:', {
           urlLength: url.length,
           urlPrefix: url.substring(0, 80) + '...',

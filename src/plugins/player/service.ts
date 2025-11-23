@@ -8,6 +8,15 @@ import { getCurrentTrackId } from './playList'
 import { pause, play, playNext, playPrev } from '@/core/player/player'
 import { log } from '@/utils/log'
 
+// Console is available globally in React Native
+declare const console: {
+  log: (...args: any[]) => void
+  warn: (...args: any[]) => void
+  error: (...args: any[]) => void
+  info: (...args: any[]) => void
+  debug: (...args: any[]) => void
+}
+
 let isInitialized = false
 
 // let retryTrack: LX.Player.Track | null = null
