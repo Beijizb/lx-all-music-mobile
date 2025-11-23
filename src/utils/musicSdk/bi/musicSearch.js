@@ -1,6 +1,23 @@
 import { httpFetch } from '../../request'
 import { formatPlayTime } from '../../index'
 import { signWbi, paramsToQuery } from './wbi'
+import { log } from '../../log'
+
+// 辅助函数：同时输出到控制台和日志文件
+const biLog = {
+  info(...msgs) {
+    console.log(...msgs)
+    log.info('[Bilibili]', ...msgs)
+  },
+  warn(...msgs) {
+    console.warn(...msgs)
+    log.warn('[Bilibili]', ...msgs)
+  },
+  error(...msgs) {
+    console.error(...msgs)
+    log.error('[Bilibili]', ...msgs)
+  },
+}
 
 // 将秒数转换为 MM:SS 格式（用于处理字符串格式的时长）
 function secToDuration(sec) {
@@ -53,7 +70,7 @@ async function getCookie() {
       return cookie
     }
   } catch (error) {
-    console.error('[Bilibili] getCookie error:', error.message || error)
+    biLog.error('getCookie error:', error.message || error)
   }
   return null
 }
@@ -191,7 +208,7 @@ export default {
       try {
         signedParams = await signWbi(params)
       } catch (error) {
-        console.warn('[Bilibili] WBI 签名失败，使用原始参数:', error.message)
+        biLog.warn('WBI 签名失败，使用原始参数:', error.message)
         signedParams = params
       }
 
@@ -211,14 +228,14 @@ export default {
         try {
           bodyData = JSON.parse(bodyData)
         } catch (e) {
-          console.error('[Bilibili] 解析响应 JSON 失败:', e)
+          biLog.error('解析响应 JSON 失败:', e)
           throw new Error('搜索失败：响应数据格式错误')
         }
       }
 
       // B站 API 返回格式: { code: 0, data: { result: [...], numResults: number } }
       if (bodyData?.code !== 0 && bodyData?.code !== undefined) {
-        console.error('[Bilibili] API 返回错误码:', bodyData.code, bodyData.message)
+        biLog.error('API 返回错误码:', bodyData.code, bodyData.message)
         throw new Error(`搜索失败：${bodyData.message || '未知错误'}`)
       }
 
@@ -248,7 +265,7 @@ export default {
         page: resultData.page,
       }
     } catch (error) {
-      console.error('[Bilibili] musicSearch error:', error.message || error)
+      biLog.error('musicSearch error:', error.message || error)
       throw error
     }
   },
@@ -265,7 +282,7 @@ export default {
         if (!bvid && !aid) {
           // 添加调试信息，帮助排查问题
           if (index < 5) {
-            console.warn('[Bilibili] 跳过无效结果（缺少 bvid 和 aid）:', {
+            biLog.warn('跳过无效结果（缺少 bvid 和 aid）:', {
               title: item.title,
               itemKeys: Object.keys(item),
               bvid: item.bvid,
@@ -292,7 +309,7 @@ export default {
 
         // 添加调试信息（前3个结果）
         if (index < 3) {
-          console.log(`[Bilibili] 处理搜索结果 ${index + 1}:`, {
+          biLog.info(`处理搜索结果 ${index + 1}:`, {
             title,
             extractedBvid: bvid,
             extractedAid: aid,
@@ -361,7 +378,7 @@ export default {
         }
       })
       .catch((err) => {
-        console.log('[Bilibili] 搜索错误，准备重试:', err.message, '次数:', retryNum)
+        biLog.info('搜索错误，准备重试:', err.message, '次数:', retryNum)
         if (retryNum < 3) {
           return this.search(str, page, limit, retryNum)
         }
