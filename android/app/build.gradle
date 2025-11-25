@@ -119,6 +119,16 @@ android {
         }
     }
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    // 强制使用 UTF-8 编码编译 Java 文件
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+    }
+
     buildTypes {
         debug {
             signingConfig signingConfigs.debug

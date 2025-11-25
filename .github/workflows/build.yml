@@ -18,6 +18,11 @@ jobs:
   build-debug:
     name: Build Debug APK
     runs-on: ubuntu-latest
+    env:
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+      JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+      GRADLE_OPTS: -Dfile.encoding=UTF-8
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -55,6 +60,11 @@ jobs:
   build-release:
     name: Build Release APK
     runs-on: ubuntu-latest
+    env:
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+      JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+      GRADLE_OPTS: -Dfile.encoding=UTF-8
     permissions:
       contents: write
     steps:
