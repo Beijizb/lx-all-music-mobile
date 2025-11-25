@@ -112,7 +112,8 @@ export const getMusicUrl = async ({
       });
       console.log('Custom API request succeeded', result);
       void saveMusicUrl(musicInfo, result.quality, result.url);
-      return result.url;
+      // 返回包含 url 和 headers 的对象
+      return result.headers ? { url: result.url, headers: result.headers } : result.url;
     } catch (apiError) {
       console.log('API request failed, falling back to Cookie request', apiError);
       // 如果 API 失败且有 Cookie，则尝试 Cookie 作为备用方案

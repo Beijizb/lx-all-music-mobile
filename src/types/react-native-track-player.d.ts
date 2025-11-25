@@ -33,16 +33,20 @@ declare module 'react-native-track-player' {
     album?: string
     artwork?: string
     duration?: number
+    headers?: Record<string, string>
+    userAgent?: string
     [key: string]: any
   }
 
-  export interface Capability {
-    play: boolean
-    pause: boolean
-    stop: boolean
-    next: boolean
-    previous: boolean
-    seek: boolean
+  export enum Capability {
+    Play = 'play',
+    Pause = 'pause',
+    Stop = 'stop',
+    Next = 'next',
+    Previous = 'previous',
+    SeekTo = 'seekTo',
+    SkipToNext = 'skipToNext',
+    SkipToPrevious = 'skipToPrevious',
   }
 
   export enum RepeatMode {
@@ -76,6 +80,12 @@ declare module 'react-native-track-player' {
     skipToPrevious(): Promise<void>
     setRepeatMode(mode: RepeatMode): Promise<void>
     getRepeatMode(): Promise<RepeatMode>
+    updateOptions(options: any): Promise<void>
+    updateNowPlayingTitles(duration: number, title: string, artist: string, album: string): Promise<void>
+    destroy(): Promise<void>
+    isCached(url: string): Promise<boolean>
+    getCacheSize(): Promise<number>
+    clearCache(): Promise<void>
     registerPlaybackService(serviceFactory: () => (() => Promise<void>) | Promise<() => void>): void
     addEventListener(event: Event, handler: (data: any) => void): { remove: () => void }
     removeEventListener(event: Event, handler: (data: any) => void): void

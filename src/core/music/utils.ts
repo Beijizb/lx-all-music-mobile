@@ -381,8 +381,12 @@ export const handleGetOnlineMusicUrl = async ({
     reqPromise = Promise.reject(err)
   }
   return reqPromise
-    .then(({ url, type }: { url: string; type: LX.Quality }) => {
-      return { musicInfo, url, quality: type, isFromCache: false }
+    .then((result: { url: string; type: LX.Quality; headers?: Record<string, string> }) => {
+      // 兼容旧格式（只有 url 和 type）和新格式（包含 headers）
+      const url = result.url
+      const type = result.type
+      const headers = result.headers
+      return { musicInfo, url, quality: type, isFromCache: false, headers }
     })
     .catch(async (err: any) => {
       if (!allowToggleSource || err.message == requestMsg.tooManyRequests) throw err

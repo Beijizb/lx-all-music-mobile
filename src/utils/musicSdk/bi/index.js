@@ -1196,9 +1196,23 @@ async function getMusicUrl(songInfo, type) {
       })
     }
     
-    // 返回修复后的URL
-    // 注意：这里返回字符串，外部会包装成对象
-    return finalUrl
+    // 参考 bb.js 实现：返回 headers（包含 referer）
+    // 构建播放时需要的 headers
+    const hostUrl = finalUrl.substring(finalUrl.indexOf('/') + 2)
+    const host = hostUrl.substring(0, hostUrl.indexOf('/'))
+    const playbackHeaders = {
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36 Edg/89.0.774.63',
+      accept: '*/*',
+      'accept-encoding': 'gzip, deflate, br',
+      connection: 'keep-alive',
+      host: host,
+      referer: useBvid 
+        ? `https://www.bilibili.com/video/${useBvid}`
+        : `https://www.bilibili.com/video/av${useAid}`,
+    }
+    
+    // 返回包含 url 和 headers 的对象
+    return { url: finalUrl, headers: playbackHeaders }
   } catch (error) {
     // 记录详细的错误信息，包括堆栈
     biLog.error('getMusicUrl error:', {
@@ -1217,15 +1231,30 @@ const bi = {
   getMusicUrl(songInfo, type) {
     return {
       promise: getMusicUrl(songInfo, type)
-        .then((url) => {
+        .then((result) => {
+          // 处理返回结果：可能是字符串（旧格式）或对象（新格式）
+          let finalUrl, headers
+          if (typeof result === 'string') {
+            // 兼容旧格式：只返回 URL 字符串
+            finalUrl = result
+            headers = null
+          } else if (result && typeof result === 'object') {
+            // 新格式：返回 { url, headers }
+            finalUrl = result.url
+            headers = result.headers
+          } else {
+            biLog.error('getMusicUrl 返回了无效的结果:', { result, type: typeof result })
+            throw new Error('获取到的播放地址无效')
+          }
+          
           // 验证返回的URL
-          if (!url || typeof url !== 'string') {
-            biLog.error('getMusicUrl 返回了无效的URL:', { url, type: typeof url })
+          if (!finalUrl || typeof finalUrl !== 'string') {
+            biLog.error('getMusicUrl 返回了无效的URL:', { finalUrl, type: typeof finalUrl })
             throw new Error('获取到的播放地址无效')
           }
           
           // 再次修复URL格式问题（双重保险）
-          let finalUrl = url.trim()
+          finalUrl = finalUrl.trim()
           
           // 检查并修复路径中的扩展名问题
           if (finalUrl.includes('.m?') && !finalUrl.includes('.m4s?')) {
@@ -1251,12 +1280,12 @@ const bi = {
             urlPreview: finalUrl.length > 100 ? finalUrl.substring(0, 100) + '...' : finalUrl,
             type,
             hasM4s: finalUrl.includes('.m4s'),
+            hasHeaders: !!headers,
           })
           
-          // 返回包含type和url的对象
-          // 注意：根据代码库中的使用方式，返回格式应该是 { type, url }
-          // 如果需要headers，可以在track构建时添加
-          return { type, url: finalUrl }
+          // 返回包含type、url和headers的对象
+          // 注意：react-native-track-player 可能不支持完整的 headers，但我们可以尝试
+          return { type, url: finalUrl, headers: headers || undefined }
         })
         .catch((error) => {
           // 记录详细的错误信息

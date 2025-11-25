@@ -36,7 +36,8 @@ const formatMusicInfo = (musicInfo: LX.Player.PlayMusic) => {
 const buildTracks = (
   musicInfo: LX.Player.PlayMusic,
   url: LX.Player.Track['url'],
-  duration?: LX.Player.Track['duration']
+  duration?: LX.Player.Track['duration'],
+  headers?: Record<string, string>
 ): LX.Player.Track[] => {
   const mInfo = formatMusicInfo(musicInfo)
   const track = [] as LX.Player.Track[]
@@ -44,15 +45,29 @@ const buildTracks = (
   const album = mInfo.album || undefined
   const artwork =
     isShowNotificationImage && mInfo.pic && httpRxp.test(mInfo.pic) ? mInfo.pic : undefined
-  if (url) {
+  
+  // 验证并清理URL
+  let validUrl: string | undefined = undefined
+  if (url && typeof url === 'string') {
+    const trimmedUrl = url.trim()
+    // 验证URL格式
+    if (trimmedUrl && (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://'))) {
+      validUrl = trimmedUrl
+    } else {
+      console.warn('[Player] 无效的URL格式，跳过:', trimmedUrl.substring(0, 100))
+    }
+  }
+  
+  if (validUrl) {
     track.push({
-      id: `${mInfo.id}__//${Math.random()}__//${url}`,
-      url,
+      id: `${mInfo.id}__//${Math.random()}__//${validUrl}`,
+      url: validUrl,
       title: mInfo.name || 'Unknow',
       artist: mInfo.singer || 'Unknow',
       album,
       artwork,
       userAgent: defaultUserAgent,
+      headers: headers, // 参考 bb.js：支持完整的 headers（包含 referer）
       musicId: mInfo.id,
       // original: { ...musicInfo },
       duration,
@@ -138,44 +153,95 @@ export const updateMetaData = async (
   }
 }
 
-const handlePlayMusic = async (musicInfo: LX.Player.PlayMusic, url: string, time: number) => {
-  // console.log(tracks, time)
-  const tracks = buildTracks(musicInfo, url)
-  const track = tracks[0]
-  // await updateMusicInfo(track)
-  const currentTrackIndex = await TrackPlayer.getCurrentTrack()
-  await TrackPlayer.add(tracks).then(() => list.push(...tracks))
-  const queue = (await TrackPlayer.getQueue()) as LX.Player.Track[]
-  await TrackPlayer.skip(queue.findIndex((t) => t.id == track.id))
+const handlePlayMusic = async (musicInfo: LX.Player.PlayMusic, url: string, time: number, headers?: Record<string, string>) => {
+  try {
+    // console.log(tracks, time)
+    const tracks = buildTracks(musicInfo, url, undefined, headers)
+    const track = tracks[0]
+    if (!track) {
+      console.error('[Player] 无法构建track，URL可能无效:', url?.substring(0, 100))
+      throw new Error('无法构建播放track')
+    }
+    
+    // await updateMusicInfo(track)
+    const currentTrackIndex = await TrackPlayer.getCurrentTrack()
+    
+    try {
+      await TrackPlayer.add(tracks)
+      list.push(...tracks)
+    } catch (addError: any) {
+      console.error('[Player] 添加track失败:', addError)
+      // 检查是否是B站URL相关错误
+      if (url && (url.includes('bilivideo.com') || url.includes('bilibili.com'))) {
+        console.warn('[Player] B站URL添加失败，可能的原因：')
+        console.warn('1. URL格式问题')
+        console.warn('2. TrackPlayer不支持该URL格式')
+        console.warn('3. URL需要特殊headers')
+      }
+      throw addError
+    }
+    
+    const queue = (await TrackPlayer.getQueue()) as LX.Player.Track[]
+    const trackIndex = queue.findIndex((t) => t.id == track.id)
+    if (trackIndex === -1) {
+      console.error('[Player] 无法找到track在队列中的位置')
+      throw new Error('无法找到track在队列中的位置')
+    }
+    
+    try {
+      await TrackPlayer.skip(trackIndex)
+    } catch (skipError: any) {
+      console.error('[Player] 跳转到track失败:', skipError)
+      throw skipError
+    }
 
-  if (currentTrackIndex == null) {
-    if (!isTempTrack(track.id as string)) {
-      if (time) await TrackPlayer.seekTo(time)
-      if (global.lx.restorePlayInfo) {
+    if (currentTrackIndex == null) {
+      if (!isTempTrack(track.id as string)) {
+        try {
+          if (time) await TrackPlayer.seekTo(time)
+          if (global.lx.restorePlayInfo) {
+            await TrackPlayer.pause()
+            // let startupAutoPlay = settingState.setting['player.startupAutoPlay']
+            global.lx.restorePlayInfo = null
+
+            // TODO startupAutoPlay
+            // if (startupAutoPlay) store.dispatch(playerAction.playMusic())
+          } else {
+            await TrackPlayer.play()
+          }
+        } catch (playError: any) {
+          console.error('[Player] 播放失败:', playError)
+          // 不抛出错误，让错误处理机制处理
+          throw playError
+        }
+      }
+    } else {
+      try {
         await TrackPlayer.pause()
-        // let startupAutoPlay = settingState.setting['player.startupAutoPlay']
-        global.lx.restorePlayInfo = null
-
-        // TODO startupAutoPlay
-        // if (startupAutoPlay) store.dispatch(playerAction.playMusic())
-      } else {
-        await TrackPlayer.play()
+        if (!isTempTrack(track.id as string)) {
+          await TrackPlayer.seekTo(time)
+          await TrackPlayer.play()
+        }
+      } catch (playError: any) {
+        console.error('[Player] 播放失败:', playError)
+        throw playError
       }
     }
-  } else {
-    await TrackPlayer.pause()
-    if (!isTempTrack(track.id as string)) {
-      await TrackPlayer.seekTo(time)
-      await TrackPlayer.play()
-    }
-  }
 
-  if (queue.length > 2) {
-    void TrackPlayer.remove(
-      Array(queue.length - 2)
-        .fill(null)
-        .map((_, i) => i)
-    ).then(() => list.splice(0, list.length - 2))
+    if (queue.length > 2) {
+      void TrackPlayer.remove(
+        Array(queue.length - 2)
+          .fill(null)
+          .map((_, i) => i)
+      ).then(() => list.splice(0, list.length - 2)).catch((err) => {
+        console.warn('[Player] 清理队列失败:', err)
+      })
+    }
+  } catch (error: any) {
+    console.error('[Player] handlePlayMusic 发生错误:', error)
+    // 不重新抛出错误，避免导致应用崩溃
+    // 错误会通过 PlaybackError 事件处理
+    throw error
   }
 }
 let playPromise = Promise.resolve()

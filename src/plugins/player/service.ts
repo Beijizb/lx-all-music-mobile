@@ -96,15 +96,51 @@ const registerPlaybackService = async () => {
           }
           console.log('[Player] 播放错误时的 track 信息:', errorInfo)
           // 同时记录到日志文件
-          log.error('[Player] 播放错误:', JSON.stringify(errorInfo, null, 2))
+          try {
+            log.error('[Player] 播放错误:', JSON.stringify(errorInfo, null, 2))
+          } catch (logErr) {
+            console.warn('[Player] 记录日志失败:', logErr)
+          }
+          
+          // 检查是否是B站音乐，如果是，记录特殊信息
+          const isBilibili = track.url && (
+            track.url.includes('bilivideo.com') || 
+            track.url.includes('biliapi.com') || 
+            track.url.includes('bilibili.com')
+          )
+          if (isBilibili) {
+            console.warn('[Player] B站音乐播放失败，可能的原因：')
+            console.warn('1. URL需要Referer header，但TrackPlayer可能不支持')
+            console.warn('2. CDN可能有地区限制，需要特定IP才能访问')
+            console.warn('3. URL格式可能有问题，请检查URL是否完整')
+          }
         }
       }
     } catch (e) {
       console.warn('[Player] 获取 track 信息失败:', e)
-      log.warn('[Player] 获取 track 信息失败:', e.message || e)
+      try {
+        log.warn('[Player] 获取 track 信息失败:', e.message || e)
+      } catch (logErr) {
+        // 忽略日志记录失败
+      }
     }
-    global.app_event.error()
-    global.app_event.playerError()
+    
+    // 安全地触发错误事件，防止事件处理函数内部抛出异常导致崩溃
+    try {
+      if (global.app_event && typeof global.app_event.error === 'function') {
+        global.app_event.error()
+      }
+    } catch (e) {
+      console.error('[Player] 触发 error 事件失败:', e)
+    }
+    
+    try {
+      if (global.app_event && typeof global.app_event.playerError === 'function') {
+        global.app_event.playerError()
+      }
+    } catch (e) {
+      console.error('[Player] 触发 playerError 事件失败:', e)
+    }
   })
 
   TrackPlayer.addEventListener(TPEvent.RemoteSeek, async ({ position }) => {

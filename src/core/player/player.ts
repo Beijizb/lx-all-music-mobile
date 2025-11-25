@@ -108,7 +108,7 @@ const getMusicPlayUrl = async (
   musicInfo: LX.Music.MusicInfo | LX.Download.ListItem,
   isRefresh = false,
   isRetryed = false
-): Promise<string | null> => {
+): Promise<{ url: string; headers?: Record<string, string> } | string | null> => {
   // this.musicInfo.url = await getMusicPlayUrl(targetSong, type)
   setStatusText(global.i18n.t('player__getting_url'))
   addLoadTimeout()
@@ -136,10 +136,11 @@ const getMusicPlayUrl = async (
         },
       })
     })
-    .then((url) => {
+    .then((result) => {
       if (global.lx.isPlayedStop || diffCurrentMusicInfo(musicInfo)) return null
 
-      return url
+      // 兼容旧格式（只返回字符串）和新格式（返回对象）
+      return result
     })
     .catch(async (err) => {
       // console.log('err', err.message)
@@ -167,9 +168,12 @@ export const setMusicUrl = (
   if (cancelDelayRetry) cancelDelayRetry()
   global.lx.gettingUrlId = createGettingUrlId(musicInfo)
   void getMusicPlayUrl(musicInfo, isRefresh)
-    .then((url) => {
-      if (!url) return
-      setResource(musicInfo, url, playerState.progress.nowPlayTime)
+    .then((result) => {
+      if (!result) return
+      // 兼容旧格式（只返回字符串）和新格式（返回对象）
+      const url = typeof result === 'string' ? result : result.url
+      const headers = typeof result === 'string' ? undefined : result.headers
+      setResource(musicInfo, url, playerState.progress.nowPlayTime, headers)
     })
     .catch((err: any) => {
       console.log(err)
