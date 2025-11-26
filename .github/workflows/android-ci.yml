@@ -1,0 +1,54 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  android-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: '26.1.10909125' # 与 android/build.gradle 中的 ndkVersion 保持一致
+
+      - name: 清理构建缓存
+        run: |
+          rm -rf ~/.gradle/caches/
+          cd android
+          ./gradlew clean
+          rm -rf .cxx
+          cd app
+          rm -rf .cxx
+
+      - name: 安装 JS 依赖
+        run: |
+          npm ci
+
+      - name: 构建 Android Release
+        run: |
+          cd android
+          ./gradlew assembleRelease
+
+
