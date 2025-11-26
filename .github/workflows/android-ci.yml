@@ -12,9 +12,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        env:
-          # 确保 Git 检出时使用 UTF-8 编码
-          GIT_LFS_SKIP_SMUDGE: 1
+
+      - name: 设置 Gradle 缓存
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -33,6 +40,7 @@ jobs:
 
       - name: Install Android NDK
         uses: nttld/setup-ndk@v1
+        id: setup-ndk
         with:
           # 对应 26.1.10909125 的"r26d"写法，nttld/setup-ndk 只认 rXX 格式
           # nttld/setup-ndk 会自动设置 ANDROID_NDK_HOME 环境变量
@@ -41,7 +49,6 @@ jobs:
       - name: 配置 Git 环境编码
         run: |
           git config --global core.quotepath false
-          git config --global i18n.commitencoding utf-8
           git config --global i18n.logoutputencoding utf-8
 
       - name: 安装 JS 依赖
@@ -50,21 +57,25 @@ jobs:
       - name: 转换 Java 文件编码为 UTF-8
         run: |
           # 将 GBK 编码的 Java 文件转换为 UTF-8
-          # 使用 iconv 批量转换，如果文件已经是 UTF-8 则跳过（不会报错）
-          find android/app/src/main/java -name "*.java" -type f | while read file; do
+          # 注意：这是临时方案，建议在本地将所有 Java 文件转换为 UTF-8 后提交
+          find android/app/src/main/java -name "*.java" -type f -exec sh -c '
+            file="$1"
             # 尝试从 GBK 转换到 UTF-8
             if iconv -f GBK -t UTF-8 "$file" > "$file.tmp" 2>/dev/null && [ -s "$file.tmp" ]; then
-              mv "$file.tmp" "$file"
-              echo "✓ Converted $file from GBK to UTF-8"
+              # 验证转换后的文件包含有效的 Java 代码
+              if head -n 5 "$file.tmp" | grep -qE "(package|import|public|class|//)" 2>/dev/null; then
+                mv "$file.tmp" "$file"
+                echo "✓ Converted $file from GBK to UTF-8"
+              else
+                rm -f "$file.tmp"
+              fi
             else
               rm -f "$file.tmp" 2>/dev/null || true
             fi
-          done
-        continue-on-error: true  # 如果所有文件都已经是 UTF-8，忽略错误
+          ' _ {} \;
 
       - name: 清理构建缓存
         run: |
-          rm -rf ~/.gradle/caches/
           cd android
           chmod +x gradlew  # 确保 gradlew 有执行权限
           ./gradlew clean
@@ -73,13 +84,11 @@ jobs:
       - name: 构建 Android Release
         env:
           # 强制使用 UTF-8 编码，解决中文注释编译错误
-          # ANDROID_NDK_HOME 已由 nttld/setup-ndk 自动设置
           JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8"
           LANG: C.UTF-8
           LC_ALL: C.UTF-8
         run: |
           cd android
-          chmod +x gradlew  # 确保 gradlew 有执行权限
-          ./gradlew assembleRelease --refresh-dependencies
+          ./gradlew assembleRelease
 
 
