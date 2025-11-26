@@ -31,7 +31,8 @@ jobs:
       - name: Install Android NDK
         uses: nttld/setup-ndk@v1
         with:
-          ndk-version: '26.1.10909125' # 与 android/build.gradle 中的 ndkVersion 保持一致
+          # 对应 26.1.10909125 的“r26d”写法，nttld/setup-ndk 只认 rXX 格式
+          ndk-version: 'r26d'
 
       - name: 清理构建缓存
         run: |
