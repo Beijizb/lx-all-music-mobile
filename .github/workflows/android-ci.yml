@@ -12,6 +12,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        env:
+          # 确保 Git 检出时使用 UTF-8 编码
+          GIT_LFS_SKIP_SMUDGE: 1
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -43,13 +46,29 @@ jobs:
           cd app
           rm -rf .cxx
 
+      - name: 配置 Git 编码
+        run: |
+          git config --global core.quotepath false
+          git config --global i18n.commitencoding utf-8
+          git config --global i18n.logoutputencoding utf-8
+
+      - name: 转换 Java 文件编码为 UTF-8
+        run: |
+          find android/app/src/main/java -name "*.java" -exec sh -c 'iconv -f gbk -t utf-8 "$1" > "$1.tmp" && mv "$1.tmp" "$1"' _ {} \;
+        continue-on-error: true  # 如果文件已经是 UTF-8，忽略错误
+
       - name: 安装 JS 依赖
         run: |
           npm ci
 
       - name: 构建 Android Release
+        env:
+          # 强制使用 UTF-8 编码，解决中文注释编译错误
+          JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8"
+          LANG: C.UTF-8
+          LC_ALL: C.UTF-8
         run: |
           cd android
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease --refresh-dependencies
 
 
