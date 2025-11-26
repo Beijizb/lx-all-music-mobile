@@ -279,7 +279,7 @@ public class UtilsModule extends ReactContextBaseJavaModule {
     Intent intent = new Intent();
     String packageName = reactContext.getApplicationContext().getPackageName();
 
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { // 8.0及以�?      intent.setAction("android.settings.APP_NOTIFICATION_SETTINGS");
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { // 8.0鍙婁互涓?      intent.setAction("android.settings.APP_NOTIFICATION_SETTINGS");
       intent.putExtra("android.provider.extra.APP_PACKAGE", packageName);
     } else { // android 5.0-7.0
       intent.setAction("android.settings.APP_NOTIFICATION_SETTINGS");
@@ -364,7 +364,7 @@ public class UtilsModule extends ReactContextBaseJavaModule {
       promise.resolve(params);
       return;
     }
-    // 获取当前应用可用区域大小
+    // 鑾峰彇褰撳墠搴旂敤鍙敤鍖哄煙澶у皬
     Window window = currentActivity.getWindow();
     Rect rect = new Rect();
     window.getDecorView().getWindowVisibleDisplayFrame(rect);
