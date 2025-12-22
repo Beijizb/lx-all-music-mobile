@@ -17,8 +17,8 @@ import DailyRec from '../Views/DailyRec'
 import MyPlaylist from '../Views/MyPlaylist'
 import FollowedArtists from '../Views/FollowedArtists'
 import SubscribedAlbums from '../Views/SubscribedAlbums';
-import {NAV_MENUS} from "@/config/constant.ts";
-import {useSettingValue} from "@/store/setting/hook.ts";
+import {NAV_MENUS} from "@/config/constant";
+import {useSettingValue} from "@/store/setting/hook";
 
 const hideKeys = ['list.isShowAlbumName', 'list.isShowInterval', 'theme.fontShadow'] as Readonly<
   Array<keyof LX.AppSetting>

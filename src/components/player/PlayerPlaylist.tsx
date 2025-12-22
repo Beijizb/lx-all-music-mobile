@@ -16,7 +16,7 @@ import MusicDownloadModal, { type MusicDownloadModalType } from '@/screens/Home/
 import { useSettingValue } from '@/store/setting/hook';
 import listState from '@/store/list/state';
 import { addTempPlayList } from '@/core/player/tempPlayList';
-import { Icon } from "@/components/common/Icon.tsx";
+import { Icon } from "@/components/common/Icon";
 
 import OnlineListItem from '@/components/OnlineList/ListItem';
 import ListMenu, { type ListMenuType, type Position, type SelectInfo } from '@/components/OnlineList/ListMenu';
@@ -30,7 +30,7 @@ import {
 import { handleShare } from '@/screens/Home/Views/Mylist/MusicList/listAction';
 import settingState from '@/store/setting/state';
 import commonState from '@/store/common/state';
-import {addSongsToPlayLater} from "@/core/player/playLaterManager.ts";
+import {addSongsToPlayLater} from "@/core/player/playLaterManager";
 
 export interface PlayerPlaylistType {
   show: () => void;

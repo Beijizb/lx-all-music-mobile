@@ -1,6 +1,6 @@
 import state from './state';
 import DownloadTask = LX.Download.DownloadTask;
-import {saveDownloadTasks} from "@/utils/data/download.ts";
+import {saveDownloadTasks} from "@/utils/data/download";
 import {throttle} from "@/utils";
 
 

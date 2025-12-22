@@ -11,8 +11,8 @@ import settingState from '@/store/setting/state'
 import {useTheme} from "@/store/theme/hook"
 import {getPlaylistType, savePlaylistType} from "@/utils/data"
 import {Text, View} from "react-native"
-import {updateWySubscribedPlaylistTrackCount} from "@/store/user/action.ts";
-import {clearListDetailCache} from "@/core/songlist.ts";
+import {updateWySubscribedPlaylistTrackCount} from "@/store/user/action";
+import {clearListDetailCache} from "@/core/songlist";
 
 export interface SelectInfo {
   musicInfo: LX.Music.MusicInfo | null

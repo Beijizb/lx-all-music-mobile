@@ -2,7 +2,7 @@ import { getListMusics } from '@/core/list';
 import listState from '@/store/list/state';
 import settingState from '@/store/setting/state';
 import { LIST_IDS } from '@/config/constant';
-import {getUserApiList, getUserApiScript} from "@/utils/data.ts";
+import {getUserApiList, getUserApiScript} from "@/utils/data";
 
 export const getAllDataForSync = async () => {
   const defaultList = await getListMusics(listState.defaultList.id);

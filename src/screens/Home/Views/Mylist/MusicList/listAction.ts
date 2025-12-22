@@ -23,7 +23,7 @@ import { getMusicUrl, getLyricInfo, getPicUrl } from '@/core/music/online'
 import { writeMetadata, writePic, writeLyric } from '@/utils/localMediaMetadata'
 import { downloadFile, writeFile } from '@/utils/fs'
 import {MusicMetadata} from "react-native-local-media-metadata";
-import {addSongsToPlayLater} from "@/core/player/playLaterManager.ts";
+import {addSongsToPlayLater} from "@/core/player/playLaterManager";
 export const handlePlay = (listId: SelectInfo['listId'], index: SelectInfo['index']) => {
   void playList(listId, index)
 }

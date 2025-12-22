@@ -24,11 +24,11 @@ import MusicDownloadModal, {
 } from '@/screens/Home/Views/Mylist/MusicList/MusicDownloadModal'
 import {createStyle, toast} from '@/utils/tools'
 import wyApi from '@/utils/musicSdk/wy/user'
-import {batchDownload} from "@/core/download.ts"
+import {batchDownload} from "@/core/download"
 import {getMvUrl} from "@/utils/musicSdk/wy/mv.js"
 import {useI18n} from "@/lang"
-import {updateWySubscribedPlaylistTrackCount} from "@/store/user/action.ts"
-import {clearListDetailCache} from "@/core/songlist.ts"
+import {updateWySubscribedPlaylistTrackCount} from "@/store/user/action"
+import {clearListDetailCache} from "@/core/songlist"
 import commonState from '@/store/common/state'
 
 export interface OnlineListProps {
