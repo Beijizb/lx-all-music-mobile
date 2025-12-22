@@ -294,7 +294,7 @@ public class LyricView extends Activity implements View.OnTouchListener {
   private void handleShowLyric() {
     if (windowManager == null) {
       windowManager = (WindowManager) reactContext.getSystemService(Context.WINDOW_SERVICE);
-      //璁剧疆TextView鐨勫睘鎬?      layoutParams = new WindowManager.LayoutParams();
+      layoutParams = new WindowManager.LayoutParams();
 
       DisplayMetrics outMetrics = new DisplayMetrics();
       windowManager.getDefaultDisplay().getMetrics(outMetrics);
@@ -324,7 +324,7 @@ public class LyricView extends Activity implements View.OnTouchListener {
     if (isLock) {
       textView.setBackgroundColor(Color.TRANSPARENT);
 
-      // 淇 Android 12 鐨勭┛閫忕偣鍑婚棶棰?      if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
+      if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
         layoutParams.alpha = 0.8f;
       }
     } else {
@@ -349,7 +349,7 @@ public class LyricView extends Activity implements View.OnTouchListener {
     textView.setWidth(layoutParams.width);
     setLayoutParamsHeight();
 
-    //鏄剧ず浣嶇疆涓庢寚瀹氫綅缃殑鐩稿浣嶇疆宸?    layoutParams.x = (int)(maxWidth * prevViewPercentageX);
+    layoutParams.x = (int)(maxWidth * prevViewPercentageX);
     layoutParams.y = (int)(maxHeight * prevViewPercentageY);
 
     fixViewPosition();
@@ -357,7 +357,7 @@ public class LyricView extends Activity implements View.OnTouchListener {
     //璁剧疆閫忔槑
     layoutParams.format = PixelFormat.TRANSPARENT;
 
-    //娣诲姞鍒皐indow涓?    windowManager.addView(textView, layoutParams);
+    windowManager.addView(textView, layoutParams);
   }
 
   public void setLyric(String text, ArrayList<String> extendedLyrics) {
@@ -428,7 +428,7 @@ public class LyricView extends Activity implements View.OnTouchListener {
         if (preY == 0){
           preY = nowY;
         }
-        // 璁＄畻XY鍧愭爣鍋忕Щ閲?        tranX = nowX - lastX;
+        tranX = nowX - lastX;
         tranY = nowY - lastY;
 
         int x = layoutParams.x + (int)tranX;
@@ -438,9 +438,9 @@ public class LyricView extends Activity implements View.OnTouchListener {
         if (y < 0) y = 0;
         else if (y > maxY) y = maxY;
 
-        // 绉诲姩鎮诞绐?        layoutParams.x = x;
+        layoutParams.x = x;
         layoutParams.y = y;
-        //鏇存柊鎮诞绐椾綅缃?        windowManager.updateViewLayout(textView, layoutParams);
+        windowManager.updateViewLayout(textView, layoutParams);
         //璁板綍褰撳墠鍧愭爣浣滀负涓嬩竴娆¤绠楃殑涓婁竴娆＄Щ鍔ㄧ殑浣嶇疆鍧愭爣
         lastX = nowX;
         lastY = nowY;
