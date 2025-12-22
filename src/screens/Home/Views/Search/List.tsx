@@ -5,7 +5,7 @@ import type { Source as SongListSource } from '@/store/search/songlist/state'
 import MusicList, { type MusicListType } from './MusicList'
 import BlankView, { type BlankViewType } from './BlankView'
 import SonglistList from './SonglistList'
-import SearchResultList from "@/screens/Home/Views/Search/SearchResultList.tsx";
+import SearchResultList, { type SearchResultListType } from "@/screens/Home/Views/Search/SearchResultList";
 
 interface ListProps {
   onSearch: (keyword: string) => void
@@ -22,7 +22,7 @@ export interface ListType {
 export default forwardRef<ListType, ListProps>(({ onSearch, onOpenDetail }, ref) => {
   const [listType, setListType] = useState<SearchState['searchType']>('music')
   const [showBlankView, setShowListView] = useState(true)
-  const listRef = useRef<MusicListType>(null)
+  const listRef = useRef<MusicListType | SearchResultListType>(null)
   const blankViewRef = useRef<BlankViewType>(null)
 
   useImperativeHandle(

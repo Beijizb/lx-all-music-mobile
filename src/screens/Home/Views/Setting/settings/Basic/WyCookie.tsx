@@ -58,7 +58,7 @@ export default memo(() => {
 
   const handleShowLoginModal = () => {
     // 触发全局事件
-    global.app_event.emit('showWebLogin');
+    global.app_event.showWebLogin();
   };
 
   useEffect(() => {

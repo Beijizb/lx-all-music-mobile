@@ -298,7 +298,7 @@ export const listMusicUpdateInfo = async (
     if (index < 0) continue;
 
     const existingInfo = targetList[index];
-    const newInfo = { ...existingInfo, ...musicInfo, meta: { ...existingInfo.meta, ...musicInfo.meta } };
+    const newInfo = { ...existingInfo, ...musicInfo, meta: { ...existingInfo.meta, ...musicInfo.meta } } as LX.Music.MusicInfo;
     targetList.splice(index, 1, newInfo);
     updateListIds.add(id);
   }
@@ -344,7 +344,7 @@ export async function applyListOperation(
   currentData: LX.List.ListDataFull,
   operation: ListOperation
 ): Promise<LX.List.ListDataFull> {
-  const data = JSON.parse(JSON.stringify(currentData));
+  const data = JSON.parse(JSON.stringify(currentData)) as LX.List.ListDataFull;
 
   const userListMap = new Map(data.userList.map(l => [l.id, l]));
   const getTargetList = (listId: string): LX.Music.MusicInfo[] | undefined => {

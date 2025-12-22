@@ -2,7 +2,7 @@ import { memo, useEffect, useState, useCallback, useRef } from 'react'
 import {View, FlatList, RefreshControl, BackHandler, StyleSheet, Keyboard} from 'react-native'
 import ListItem from './ListItem'
 import wyApi from '@/utils/musicSdk/wy/user'
-import { useWySubscribedPlaylists, useWyUid } from '@/store/user/hook.ts'
+import { useWySubscribedPlaylists, useWyUid } from '@/store/user/hook'
 import { useSettingValue } from '@/store/setting/hook'
 import { toast } from '@/utils/tools'
 import { useTheme } from '@/store/theme/hook'
@@ -13,7 +13,7 @@ import commonState from '@/store/common/state'
 import playerState from '@/store/player/state'
 import { LIST_IDS } from '@/config/constant'
 import listState from '@/store/list/state'
-import {setWySubscribedPlaylists} from "@/store/user/action.ts"
+import {setWySubscribedPlaylists} from "@/store/user/action"
 import MusicInfoOnline = LX.Music.MusicInfoOnline;
 
 export default memo(() => {

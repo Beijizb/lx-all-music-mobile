@@ -297,7 +297,6 @@ const List = forwardRef<ListType, ListProps>(
             item={item}
             index={index}
             activeIndex={activeIndex}
-            onScrollBeginDrag={Keyboard.dismiss}
             onPress={handlePress}
             onLongPress={handleLongPress}
             onShowMenu={onShowMenu}

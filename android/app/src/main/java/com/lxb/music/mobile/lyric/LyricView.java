@@ -40,8 +40,9 @@ public class LyricView extends Activity implements View.OnTouchListener {
   private float lastX; //涓婁竴娆′綅缃殑X.Y鍧愭爣
   private float lastY;
   private float nowX;  //褰撳墠绉诲姩浣嶇疆鐨刋.Y鍧愭爣
-  private float nowY;
-  private float tranX; //鎮诞绐楃Щ鍔ㄤ綅缃殑鐩稿鍊?  private float tranY;
+   private float nowY;
+  private float tranX; //鎮诞绐楃Щ鍔ㄤ綅缃殑鐩稿鍊?
+  private float tranY;
   private float prevViewPercentageX = 0;
   private float prevViewPercentageY = 0;
   private float widthPercentage = 1f;

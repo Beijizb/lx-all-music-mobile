@@ -216,7 +216,6 @@ export const fixNewMusicInfoQuality = (musicInfo: LX.Music.MusicInfo) => {
     delete musicInfo.meta._qualitys.effect
 
     musicInfo.meta.qualitys = musicInfo.meta.qualitys.map((quality) => {
-      // @ts-expect-error
       if (quality.type == 'effect') quality.type = 'atmos'
       return quality
     })
@@ -230,7 +229,6 @@ export const fixNewMusicInfoQuality = (musicInfo: LX.Music.MusicInfo) => {
     delete musicInfo.meta._qualitys.effect_plus
 
     musicInfo.meta.qualitys = musicInfo.meta.qualitys.map((quality) => {
-      // @ts-expect-error
       if (quality.type == 'effect_plus') quality.type = 'atmos_plus'
       return quality
     })

@@ -11,28 +11,28 @@ const throttledSave = throttle(() => {
 export default {
   setTasks(tasks: LX.Download.DownloadTask[]) {
     state.tasks = tasks;
-    global.app_event.emit('download_list_changed');
+    global.app_event.download_list_changed();
   },
   addTask(task: DownloadTask) {
     // 插入到列表顶部
     state.tasks.unshift(task);
-    global.app_event.emit('download_list_changed');
-    global.app_event.emit('download_task_add', task);
+    global.app_event.download_list_changed();
+    global.app_event.download_task_add(task);
     throttledSave();
   },
   updateTask(id: string, updatedFields: Partial<DownloadTask>) {
     const taskIndex = state.tasks.findIndex(t => t.id === id);
     if (taskIndex > -1) {
       Object.assign(state.tasks[taskIndex], updatedFields);
-      global.app_event.emit('download_list_changed');
+      global.app_event.download_list_changed();
       if (updatedFields.progress) {
-        global.app_event.emit('download_progress_update', { id, progress: updatedFields.progress });
+        global.app_event.download_progress_update({ id, progress: updatedFields.progress });
       }
       if (updatedFields.status) {
-        global.app_event.emit('download_status_update', { id, status: updatedFields.status, errorMsg: updatedFields.errorMsg });
+        global.app_event.download_status_update({ id, status: updatedFields.status, errorMsg: updatedFields.errorMsg });
       }
       if (updatedFields.metadataStatus) {
-        global.app_event.emit('download_metadata_update', { id, metadataStatus: updatedFields.metadataStatus }); // [!code ++]
+        global.app_event.download_metadata_update({ id, metadataStatus: updatedFields.metadataStatus });
       }
       throttledSave();
     }
@@ -41,13 +41,13 @@ export default {
     const index = state.tasks.findIndex(t => t.id === id);
     if (index > -1) {
       state.tasks.splice(index, 1);
-      global.app_event.emit('download_list_changed');
+      global.app_event.download_list_changed();
       throttledSave();
     }
   },
   clearTasks() {
     state.tasks = [];
-    global.app_event.emit('download_list_changed');
+    global.app_event.download_list_changed();
     throttledSave();
   },
 };

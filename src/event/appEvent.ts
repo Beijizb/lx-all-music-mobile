@@ -277,7 +277,7 @@ export class AppEvent extends Event {
   download_progress_update(payload: { id: string, progress: DownloadTask['progress'] }) {
     this.emit('download_progress_update', payload)
   }
-  download_status_update(payload: { id: string, status: DownloadTask['status'] }) {
+  download_status_update(payload: { id: string, status: DownloadTask['status'], errorMsg?: string }) {
     this.emit('download_status_update', payload)
   }
   download_metadata_update(payload: { id: string, metadataStatus: DownloadTask['metadataStatus'] }) {
@@ -291,6 +291,19 @@ export class AppEvent extends Event {
   }
   playlist_updated(data: { source: string, listId: string }) {
     this.emit('playlist_updated', data)
+  }
+
+  showWebLogin() {
+    this.emit('showWebLogin')
+  }
+  showYouTubeLogin() {
+    this.emit('showYouTubeLogin')
+  }
+  'wy-cookie-set'(cookie: string) {
+    this.emit('wy-cookie-set', cookie)
+  }
+  'yt-cookie-set'(cookie: string) {
+    this.emit('yt-cookie-set', cookie)
   }
 }
 

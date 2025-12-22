@@ -5,7 +5,15 @@ import { useTheme } from '@/store/theme/hook'
 import SingerListItem from '../FollowedArtists/ListItem'
 import AlbumListItem from '../../Views/SubscribedAlbums/ListItem'
 
-export default forwardRef(({ searchType }, ref) => {
+export interface SearchResultListType {
+  loadList: (text: string, source?: any) => void
+}
+
+export interface SearchResultListProps {
+  searchType: 'singer' | 'album'
+}
+
+export default forwardRef<SearchResultListType, SearchResultListProps>(({ searchType }, ref) => {
   const [list, setList] = useState([])
   const [loading, setLoading] = useState(false)
   const searchInfoRef = useRef({ text: '', page: 1, hasMore: true })
