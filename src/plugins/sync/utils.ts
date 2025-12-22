@@ -7,7 +7,10 @@ import {
   AES_MODE,
   RSA_PADDING,
 } from '@/utils/nativeModules/crypto'
-import { btoa } from 'react-native-quick-base64'
+// Replace react-native-quick-base64 with native implementation
+const btoa = (str: string) => {
+  return Buffer.from(str).toString('base64')
+}
 
 export const aesEncrypt = (text: string, b64Key: string) => {
   // const cipher = createCipheriv('aes-128-ecb', Buffer.from(key, 'base64'), '')

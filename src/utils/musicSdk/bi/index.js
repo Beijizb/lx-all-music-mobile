@@ -1232,20 +1232,9 @@ const bi = {
     return {
       promise: getMusicUrl(songInfo, type)
         .then((result) => {
-          // 处理返回结果：可能是字符串（旧格式）或对象（新格式）
-          let finalUrl, headers
-          if (typeof result === 'string') {
-            // 兼容旧格式：只返回 URL 字符串
-            finalUrl = result
-            headers = null
-          } else if (result && typeof result === 'object') {
-            // 新格式：返回 { url, headers }
-            finalUrl = result.url
-            headers = result.headers
-          } else {
-            biLog.error('getMusicUrl 返回了无效的结果:', { result, type: typeof result })
-            throw new Error('获取到的播放地址无效')
-          }
+          // getMusicUrl 函数已经返回了 { url, headers } 格式
+          let finalUrl = result.url
+          let headers = result.headers
           
           // 验证返回的URL
           if (!finalUrl || typeof finalUrl !== 'string') {
@@ -1303,7 +1292,7 @@ const bi = {
           // 重新抛出错误，让上层处理
           throw error
         }),
-      canceleFn() {
+      cancelFn() {
         // 取消请求（如果需要）
       },
     }

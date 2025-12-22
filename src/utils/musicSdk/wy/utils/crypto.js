@@ -1,5 +1,8 @@
 // https://github.com/Binaryify/NeteaseCloudMusicApi/blob/master/util/crypto.js
-import { btoa } from 'react-native-quick-base64'
+// Replace react-native-quick-base64 with native implementation
+const btoa = (str) => {
+  return Buffer.from(str).toString('base64')
+}
 import {
   aesEncryptSync,
   aesDecryptSync,

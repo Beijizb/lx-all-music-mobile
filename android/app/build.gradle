@@ -46,6 +46,9 @@ def reactNativeArchitectures() {
     return value ? value.split(",") : ["armeabi-v7a", "x86", "x86_64", "arm64-v8a"]
 }
 
+// Define hermesEnabled property
+def hermesEnabled = project.hasProperty('hermesEnabled') ? project.getProperty('hermesEnabled') : true
+
 /**
  * ✅ 版本号读取（CI 保底不炸）
  * - 用 rootDir.parentFile 精准定位项目根目录 package.json

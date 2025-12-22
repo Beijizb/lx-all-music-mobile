@@ -1,4 +1,7 @@
-import { stringMd5 } from 'react-native-quick-md5'
+// Replace react-native-quick-md5 with native implementation
+const stringMd5 = (str) => {
+  return require('crypto').createHash('md5').update(str).digest('hex')
+}
 import { decodeName } from '../index'
 import settingState from '@/store/setting/state';
 import {logPlugin} from "@babel/preset-env/lib/debug";

@@ -444,8 +444,8 @@ async function handleGetMusicUrl(musicInfo, quality) {
     }
 
     console.log(`[Bilibili] 最终返回 URL 长度: ${url.length}`);
-    // 返回 URL（移动端可能需要特殊处理 headers）
-    return url;
+    // 返回包含 url 和 headers 的对象
+    return { url, headers };
   } catch (error) {
     console.error("[Bilibili] handleGetMusicUrl error:", error.message || error);
     console.error("[Bilibili] 错误堆栈:", error.stack);
