@@ -1,7 +1,4 @@
-// Replace react-native-quick-md5 with native implementation
-const stringMd5 = (str) => {
-  return require('crypto').createHash('md5').update(str).digest('hex')
-}
+import { md5 } from '@/utils/md5'
 import { decodeName } from '../index'
 import settingState from '@/store/setting/state';
 import {logPlugin} from "@babel/preset-env/lib/debug";
@@ -24,7 +21,7 @@ export const getMusicType = (info, type) => {
   return '128k'
 }
 
-export const toMD5 = (str) => stringMd5(str)
+export const toMD5 = (str) => md5(str)
 
 /**
  * 格式化歌手

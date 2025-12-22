@@ -35,13 +35,10 @@ import { getData, removeData, saveData } from '@/plugins/storage'
 import BackgroundTimer from 'react-native-background-timer'
 import { scaleSizeH, scaleSizeW, setSpText } from './pixelRatio'
 import { toOldMusicInfo } from './index'
-// Replace react-native-quick-md5 with native implementation
-// Simple MD5 implementation (for demonstration purposes)
-const stringMd5 = (str: string) => {
-  // This is a placeholder - in production, use a proper MD5 implementation
-  return require('crypto').createHash('md5').update(str).digest('hex')
-}
 import { windowSizeTools } from '@/utils/windowSizeTools'
+import { md5 } from '@/utils/md5'
+
+const stringMd5 = (str: string) => md5(str)
 
 // https://stackoverflow.com/a/47349998
 export const getDeviceLanguage = async () => {
