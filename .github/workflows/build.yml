@@ -54,7 +54,7 @@ jobs:
         with:
           name: app-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
-          retention-days: 14
+          retention-days: 3
 
   # Release APK 构建（用于创建 GitHub Release）
   build-release:

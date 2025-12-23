@@ -11,4 +11,4 @@ runs:
         name: app-v${{ env.PACKAGE_VERSION }}-universal-release
         path: android/app/build/outputs/apk/release/${{ env.PACKAGE_NAME }}-v${{ env.PACKAGE_VERSION }}-universal.apk
         if-no-files-found: warn
-        retention-days: 14
+        retention-days: 3
