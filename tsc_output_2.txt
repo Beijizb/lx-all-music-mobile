@@ -1,0 +1,206 @@
+src/components/ArtistSelectorManager.tsx(20,5): error TS2578: Unused '@ts-expect-error' directive.
+src/components/ArtistSelectorManager.tsx(24,7): error TS2578: Unused '@ts-expect-error' directive.
+src/components/MusicAddModal/MusicAddModal.tsx(41,28): error TS2345: Argument of type 'Dispatch<SetStateAction<"local" | "online">>' is not assignable to parameter of type '(value: string) => void | PromiseLike<void>'.
+  Types of parameters 'value' and 'value' are incompatible.
+    Type 'string' is not assignable to type 'SetStateAction<"local" | "online">'.
+src/components/MusicAddModal/MusicAddModal.tsx(142,21): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type '{ children: string; color: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Text> & Readonly<TextProps>'.
+      Property 'color' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Text> & Readonly<TextProps>'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type '{ children: string; color: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Text> & Readonly<TextProps>'.
+      Property 'color' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Text> & Readonly<TextProps>'.
+src/components/MusicAddModal/MusicAddModal.tsx(145,21): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type '{ children: string; color: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Text> & Readonly<TextProps>'.
+      Property 'color' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Text> & Readonly<TextProps>'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type '{ children: string; color: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Text> & Readonly<TextProps>'.
+      Property 'color' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Text> & Readonly<TextProps>'.
+src/components/MusicMultiAddModal/MusicMultiAddModal.tsx(45,28): error TS2345: Argument of type 'Dispatch<SetStateAction<"local" | "online">>' is not assignable to parameter of type '(value: string) => void | PromiseLike<void>'.
+  Types of parameters 'value' and 'value' are incompatible.
+    Type 'string' is not assignable to type 'SetStateAction<"local" | "online">'.
+src/components/MusicMultiAddModal/MusicMultiAddModal.tsx(148,21): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type '{ children: string; color: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Text> & Readonly<TextProps>'.
+      Property 'color' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Text> & Readonly<TextProps>'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type '{ children: string; color: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Text> & Readonly<TextProps>'.
+      Property 'color' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Text> & Readonly<TextProps>'.
+src/components/MusicMultiAddModal/MusicMultiAddModal.tsx(151,21): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type '{ children: string; color: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Text> & Readonly<TextProps>'.
+      Property 'color' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Text> & Readonly<TextProps>'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type '{ children: string; color: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Text> & Readonly<TextProps>'.
+      Property 'color' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Text> & Readonly<TextProps>'.
+src/components/player/PlayerBar/index.tsx(20,24): error TS2339: Property 'componentId' does not exist on type '{ isHome?: boolean; }'.
+src/components/player/PlayerPlaylist.tsx(257,9): error TS2322: Type '(musicInfo: SelectInfo["musicInfo"]) => void' is not assignable to type '(selectInfo: SelectInfo) => void'.
+  Types of parameters 'musicInfo' and 'selectInfo' are incompatible.
+    Type 'SelectInfo' is not assignable to type 'MusicInfo'.
+src/components/player/PlayerPlaylist.tsx(259,9): error TS2322: Type '(musicInfo: LX.Music.MusicInfoOnline, listId?: string) => Promise<void>' is not assignable to type '(selectInfo: SelectInfo) => void'.
+  Types of parameters 'musicInfo' and 'selectInfo' are incompatible.
+    Type 'SelectInfo' is not assignable to type 'MusicInfoOnline'.
+src/components/SourceSelector.tsx(29,40): error TS2345: Argument of type '"source_alias_all" | "source_alias_bi" | "source_alias_kg" | "source_alias_kw" | "source_alias_mg" | "source_alias_tx" | "source_alias_wy" | "source_alias_git" | "source_real_all" | ... 6 more ... | "source_real_git"' is not assignable to parameter of type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'.
+  Type '"source_alias_bi"' is not assignable to type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'. Did you mean '"source_alias_bd"'?
+src/components/SourceSelector.tsx(72,14): error TS2345: Argument of type '`source_alias_${S[number]}` | `source_real_${S[number]}`' is not assignable to parameter of type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'.
+  Type '`source_alias_${S[number]}`' is not assignable to type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'.
+    Type '"source_alias_all" | "source_alias_bi" | "source_alias_kg" | "source_alias_kw" | "source_alias_mg" | "source_alias_tx" | "source_alias_wy" | "source_alias_git"' is not assignable to type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'.
+      Type '"source_alias_bi"' is not assignable to type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'. Did you mean '"source_alias_bd"'?
+src/components/VideoPlayerModal.tsx(51,13): error TS2322: Type '{ ref: MutableRefObject<VideoRef>; source: { uri: string; }; style: { position: "absolute"; top: number; left: number; bottom: number; right: number; }; controls: boolean; ... 4 more ...; onError: (e: Readonly<...>) => void; }' is not assignable to type 'IntrinsicAttributes & ReactVideoProps & RefAttributes<VideoRef>'.
+  Property 'onPress' does not exist on type 'IntrinsicAttributes & ReactVideoProps & RefAttributes<VideoRef>'.
+src/config/setting.ts(43,9): error TS2322: Type 'any' is not assignable to type 'never'.
+src/config/setting.ts(57,9): error TS2322: Type 'any' is not assignable to type 'never'.
+src/core/apiSource.ts(28,5): error TS2578: Unused '@ts-expect-error' directive.
+src/core/download.ts(145,40): error TS2322: Type 'MusicInfo' is not assignable to type 'MusicInfoOnline'.
+  Type 'MusicInfoLocal' is not assignable to type 'MusicInfoOnline'.
+    Type 'MusicInfoLocal' is not assignable to type 'MusicInfo_bi'.
+      Types of property 'meta' are incompatible.
+        Type 'MusicInfoMeta_local' is missing the following properties from type 'MusicInfoMeta_bi': qualitys, _qualitys
+src/core/download.ts(215,38): error TS2345: Argument of type '{ musicInfo: LX.Music.MusicInfoOnline; }' is not assignable to parameter of type '{ musicInfo: MusicInfoOnline; listId?: string; isRefresh: boolean; allowToggleSource?: boolean; onToggleSource?: (musicInfo?: MusicInfoOnline) => void; }'.
+  Property 'isRefresh' is missing in type '{ musicInfo: LX.Music.MusicInfoOnline; }' but required in type '{ musicInfo: MusicInfoOnline; listId?: string; isRefresh: boolean; allowToggleSource?: boolean; onToggleSource?: (musicInfo?: MusicInfoOnline) => void; }'.
+src/core/init/player/playInfo.ts(14,32): error TS2345: Argument of type '{ id?: string; }' is not assignable to parameter of type '{ id: string; }'.
+  Property 'id' is optional in type '{ id?: string; }' but required in type '{ id: string; }'.
+src/core/music/online.ts(74,99): error TS2345: Argument of type 'string' is not assignable to parameter of type 'Quality'.
+src/core/music/online.ts(116,21): error TS2339: Property 'headers' does not exist on type '{ url: string; musicInfo: MusicInfoOnline; quality: Quality; isFromCache: boolean; }'.
+src/core/music/online.ts(116,31): error TS2322: Type '{ url: string; headers: any; }' is not assignable to type 'string'.
+src/core/music/online.ts(116,66): error TS2339: Property 'headers' does not exist on type '{ url: string; musicInfo: MusicInfoOnline; quality: Quality; isFromCache: boolean; }'.
+src/core/player/player.ts(93,19): error TS2345: Argument of type 'string | { url: string; headers?: Record<string, string>; }' is not assignable to parameter of type 'string | PromiseLike<string>'.
+  Type '{ url: string; headers?: Record<string, string>; }' is not assignable to type 'string | PromiseLike<string>'.
+src/core/player/player.ts(176,69): error TS2554: Expected 2-3 arguments, but got 4.
+src/core/player/playLaterManager.ts(41,40): error TS2345: Argument of type '(MusicInfo | ListItem)[]' is not assignable to parameter of type 'MusicInfo[]'.
+  Type 'MusicInfo | ListItem' is not assignable to type 'MusicInfo'.
+    Type 'ListItem' is not assignable to type 'MusicInfo'.
+      Type 'ListItem' is missing the following properties from type 'MusicInfoLocal': meta, name, singer, source, interval
+src/core/player/scrobble.ts(32,31): error TS2339: Property 'source' does not exist on type 'PlayMusic'.
+  Property 'source' does not exist on type 'ListItem'.
+src/core/player/scrobble.ts(53,23): error TS2339: Property 'meta' does not exist on type 'PlayMusic'.
+  Property 'meta' does not exist on type 'ListItem'.
+src/plugins/player/hook.ts(83,19): error TS2339: Property 'getBufferedPosition' does not exist on type '{ setupPlayer(options?: any): Promise<void>; add(tracks: Track[]): Promise<void>; remove(tracks: string[]): Promise<void>; updateMetadataForTrack(trackId: string, metadata: Partial<...>): Promise<...>; ... 28 more ...; removeEventListener(event: Event, handler: (data: any) => void): void; }'.
+src/plugins/player/hook.ts(126,21): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'Timer' is not assignable to parameter of type 'number'.
+src/plugins/player/hook.ts(131,23): error TS2339: Property 'getBufferedPosition' does not exist on type '{ setupPlayer(options?: any): Promise<void>; add(tracks: Track[]): Promise<void>; remove(tracks: string[]): Promise<void>; updateMetadataForTrack(trackId: string, metadata: Partial<...>): Promise<...>; ... 28 more ...; removeEventListener(event: Event, handler: (data: any) => void): void; }'.
+src/plugins/player/hook.ts(132,36): error TS2339: Property 'getBufferedPosition' does not exist on type '{ setupPlayer(options?: any): Promise<void>; add(tracks: Track[]): Promise<void>; remove(tracks: string[]): Promise<void>; updateMetadataForTrack(trackId: string, metadata: Partial<...>): Promise<...>; ... 28 more ...; removeEventListener(event: Event, handler: (data: any) => void): void; }'.
+src/plugins/player/playList.ts(124,47): error TS2339: Property 'getCurrentTrack' does not exist on type '{ setupPlayer(options?: any): Promise<void>; add(tracks: Track[]): Promise<void>; remove(tracks: string[]): Promise<void>; updateMetadataForTrack(trackId: string, metadata: Partial<...>): Promise<...>; ... 28 more ...; removeEventListener(event: Event, handler: (data: any) => void): void; }'.
+src/plugins/player/playList.ts(128,47): error TS2339: Property 'getCurrentTrack' does not exist on type '{ setupPlayer(options?: any): Promise<void>; add(tracks: Track[]): Promise<void>; remove(tracks: string[]): Promise<void>; updateMetadataForTrack(trackId: string, metadata: Partial<...>): Promise<...>; ... 28 more ...; removeEventListener(event: Event, handler: (data: any) => void): void; }'.
+src/plugins/player/playList.ts(167,49): error TS2339: Property 'getCurrentTrack' does not exist on type '{ setupPlayer(options?: any): Promise<void>; add(tracks: Track[]): Promise<void>; remove(tracks: string[]): Promise<void>; updateMetadataForTrack(trackId: string, metadata: Partial<...>): Promise<...>; ... 28 more ...; removeEventListener(event: Event, handler: (data: any) => void): void; }'.
+src/plugins/player/playList.ts(192,30): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/plugins/player/playList.ts(233,9): error TS2345: Argument of type 'number[]' is not assignable to parameter of type 'string[]'.
+  Type 'number' is not assignable to type 'string'.
+src/plugins/player/playList.ts(287,21): error TS2339: Property 'updateNowPlayingMetadata' does not exist on type '{ setupPlayer(options?: any): Promise<void>; add(tracks: Track[]): Promise<void>; remove(tracks: string[]): Promise<void>; updateMetadataForTrack(trackId: string, metadata: Partial<...>): Promise<...>; ... 28 more ...; removeEventListener(event: Event, handler: (data: any) => void): void; }'.
+src/plugins/storage.ts(71,29): error TS2322: Type 'string' is not assignable to type 'T'.
+  'T' could be instantiated with an arbitrary type which could be unrelated to 'string'.
+src/screens/AlbumDetail/Header.tsx(18,24): error TS2339: Property 'albumInfo' does not exist on type '{}'.
+src/screens/AlbumDetail/Header.tsx(18,35): error TS2339: Property 'componentId' does not exist on type '{}'.
+src/screens/AlbumDetail/index.tsx(80,17): error TS2322: Type '{ albumInfo: any; componentId: string; }' is not assignable to type 'IntrinsicAttributes & object'.
+  Property 'albumInfo' does not exist on type 'IntrinsicAttributes & object'.
+src/screens/AlbumDetail/index.tsx(91,20): error TS2322: Type '{ componentId: string; }' is not assignable to type 'IntrinsicAttributes & { isHome?: boolean; }'.
+  Property 'componentId' does not exist on type 'IntrinsicAttributes & { isHome?: boolean; }'.
+src/screens/ArtistDetail/AlbumList.tsx(14,24): error TS2339: Property 'componentId' does not exist on type '{}'.
+src/screens/ArtistDetail/AlbumList.tsx(14,38): error TS2339: Property 'albums' does not exist on type '{}'.
+src/screens/ArtistDetail/AlbumList.tsx(14,46): error TS2339: Property 'loading' does not exist on type '{}'.
+src/screens/ArtistDetail/AlbumList.tsx(14,55): error TS2339: Property 'hasMore' does not exist on type '{}'.
+src/screens/ArtistDetail/AlbumList.tsx(14,64): error TS2339: Property 'onLoadMore' does not exist on type '{}'.
+src/screens/ArtistDetail/AlbumList.tsx(14,76): error TS2339: Property 'onRefresh' does not exist on type '{}'.
+src/screens/ArtistDetail/AlbumList.tsx(14,87): error TS2339: Property 'ListHeaderComponent' does not exist on type '{}'.
+src/screens/ArtistDetail/AlbumList.tsx(14,108): error TS2339: Property 'viewMode' does not exist on type '{}'.
+src/screens/ArtistDetail/Header.tsx(15,24): error TS2339: Property 'artist' does not exist on type '{}'.
+src/screens/ArtistDetail/Header.tsx(15,32): error TS2339: Property 'onFollow' does not exist on type '{}'.
+src/screens/ArtistDetail/Header.tsx(15,42): error TS2339: Property 'componentId' does not exist on type '{}'.
+src/screens/ArtistDetail/index.tsx(77,20): error TS2345: Argument of type '"ARTIST_DETAIL"' is not assignable to parameter of type 'COMPONENT_IDS'.
+src/screens/ArtistDetail/index.tsx(233,17): error TS2322: Type '{ artist: any; componentId: string; }' is not assignable to type 'IntrinsicAttributes & object'.
+  Property 'artist' does not exist on type 'IntrinsicAttributes & object'.
+src/screens/ArtistDetail/index.tsx(238,11): error TS2322: Type 'string' is not assignable to type '"songs" | "albums"'.
+src/screens/ArtistDetail/index.tsx(251,20): error TS2322: Type '{ componentId: string; }' is not assignable to type 'IntrinsicAttributes & { isHome?: boolean; }'.
+  Property 'componentId' does not exist on type 'IntrinsicAttributes & { isHome?: boolean; }'.
+src/screens/ArtistDetail/SongList.tsx(161,13): error TS2322: Type '{ componentId: string; albums: any[]; loading: boolean; hasMore: boolean; onRefresh: () => void; viewMode: "list" | "grid"; onLoadMore: () => void; }' is not assignable to type 'IntrinsicAttributes & object'.
+  Property 'componentId' does not exist on type 'IntrinsicAttributes & object'.
+src/screens/Comment/components/Header.tsx(23,39): error TS2339: Property 'comment' does not exist on type '{ name: COMPONENT_IDS; id: string; }[]'.
+src/screens/DownloadManager/index.tsx(13,20): error TS2345: Argument of type '"DOWNLOAD_MANAGER"' is not assignable to parameter of type 'COMPONENT_IDS'.
+src/screens/Home/Horizontal/Header.tsx(44,14): error TS2345: Argument of type '"nav_love" | "nav_search" | "nav_setting" | "nav_songlist" | "nav_top" | "nav_daily_rec" | "nav_followed_artists" | "nav_subscribed_albums" | "nav_my_playlist"' is not assignable to parameter of type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'.
+  Type '"nav_daily_rec"' is not assignable to type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'.
+src/screens/Home/Horizontal/Header.tsx(78,14): error TS2345: Argument of type '"nav_love" | "nav_search" | "nav_setting" | "nav_songlist" | "nav_top" | "nav_daily_rec" | "nav_followed_artists" | "nav_subscribed_albums" | "nav_my_playlist"' is not assignable to parameter of type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'.
+  Type '"nav_daily_rec"' is not assignable to type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'.
+src/screens/Home/Horizontal/index.tsx(30,22): error TS2322: Type '{ componentId: string; isHome: true; }' is not assignable to type 'IntrinsicAttributes & { isHome?: boolean; }'.
+  Property 'componentId' does not exist on type 'IntrinsicAttributes & { isHome?: boolean; }'.
+src/screens/Home/Vertical/DrawerNav.tsx(205,12): error TS2345: Argument of type '"nav_love" | "nav_search" | "nav_setting" | "nav_songlist" | "nav_top" | "nav_daily_rec" | "nav_followed_artists" | "nav_subscribed_albums" | "nav_my_playlist"' is not assignable to parameter of type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'.
+  Type '"nav_daily_rec"' is not assignable to type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'.
+src/screens/Home/Vertical/DrawerNav.tsx(218,36): error TS2345: Argument of type 'IdType' is not assignable to parameter of type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'.
+  Type '"nav_daily_rec"' is not assignable to type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'.
+src/screens/Home/Vertical/DrawerNav.tsx(247,20): error TS2345: Argument of type 'IdType' is not assignable to parameter of type '"nav_love" | "nav_search" | "nav_setting" | "nav_songlist" | "nav_top" | "nav_daily_rec" | "nav_followed_artists" | "nav_subscribed_albums" | "nav_my_playlist"'.
+  Type '"back_home"' is not assignable to type '"nav_love" | "nav_search" | "nav_setting" | "nav_songlist" | "nav_top" | "nav_daily_rec" | "nav_followed_artists" | "nav_subscribed_albums" | "nav_my_playlist"'.
+src/screens/Home/Vertical/Header.tsx(71,16): error TS2345: Argument of type '"nav_love" | "nav_search" | "nav_setting" | "nav_songlist" | "nav_top" | "nav_daily_rec" | "nav_followed_artists" | "nav_subscribed_albums" | "nav_my_playlist"' is not assignable to parameter of type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'.
+  Type '"nav_daily_rec"' is not assignable to type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'.
+src/screens/Home/Vertical/Header.tsx(127,16): error TS2345: Argument of type '"nav_love" | "nav_search" | "nav_setting" | "nav_songlist" | "nav_top" | "nav_daily_rec" | "nav_followed_artists" | "nav_subscribed_albums" | "nav_my_playlist"' is not assignable to parameter of type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'.
+  Type '"nav_daily_rec"' is not assignable to type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'.
+src/screens/Home/Vertical/index.tsx(9,18): error TS2322: Type '{ componentId: string; isHome: true; }' is not assignable to type 'IntrinsicAttributes & { isHome?: boolean; }'.
+  Property 'componentId' does not exist on type 'IntrinsicAttributes & { isHome?: boolean; }'.
+src/screens/Home/Vertical/index.tsx(9,44): error TS17001: JSX elements cannot have multiple attributes with the same name.
+src/screens/Home/Vertical/Main.tsx(345,35): error TS2304: Cannot find name 'NAV_ID_Type'.
+src/screens/Home/Vertical/Main.tsx(346,21): error TS2304: Cannot find name 'NAV_ID_Type'.
+src/screens/Home/Views/DailyRec/index.tsx(115,13): error TS2741: Property 'initialScrollToInfo' is missing in type '{ info: ListInfoItem; onBack: () => void; }' but required in type '{ info: ListInfoItem; onBack?: () => void; initialScrollToInfo: MusicInfoOnline; }'.
+src/screens/Home/Views/Mylist/MusicList/index.tsx(104,38): error TS2339: Property 'mv' does not exist on type 'MusicInfoMeta_online | MusicInfoMeta_kg | MusicInfoMeta_tx | MusicInfoMeta_mg | MusicInfoMeta_bi | MusicInfoMeta_local'.
+  Property 'mv' does not exist on type 'MusicInfoMeta_local'.
+src/screens/Home/Views/Mylist/MusicList/index.tsx(248,9): error TS2322: Type '{ ref: MutableRefObject<ListMenuType>; onPlay: (info: any) => void; onPlayLater: (info: SelectInfo) => void; onRemove: (info: SelectInfo) => void; ... 11 more ...; onPlayMv: (info: SelectInfo) => void; }' is not assignable to type 'IntrinsicAttributes & ListMenuProps & RefAttributes<ListMenuType>'.
+  Property 'onPlay' does not exist on type 'IntrinsicAttributes & ListMenuProps & RefAttributes<ListMenuType>'. Did you mean 'onPlayMv'?
+src/screens/Home/Views/Mylist/MyList/ListMusicSort.tsx(76,15): error TS2322: Type 'Dispatch<SetStateAction<"name" | "singer" | "album" | "source" | "time">>' is not assignable to type '(id: "name" | "singer" | "album" | "random" | "source" | "time" | "up" | "down") => void'.
+  Types of parameters 'value' and 'id' are incompatible.
+    Type '"name" | "singer" | "album" | "random" | "source" | "time" | "up" | "down"' is not assignable to type 'SetStateAction<"name" | "singer" | "album" | "source" | "time">'.
+      Type '"random"' is not assignable to type 'SetStateAction<"name" | "singer" | "album" | "source" | "time">'.
+src/screens/Home/Views/Mylist/MyList/ListMusicSort.tsx(86,63): error TS2322: Type 'Dispatch<SetStateAction<"random" | "up" | "down">>' is not assignable to type '(id: "name" | "singer" | "album" | "random" | "source" | "time" | "up" | "down") => void'.
+  Types of parameters 'value' and 'id' are incompatible.
+    Type '"name" | "singer" | "album" | "random" | "source" | "time" | "up" | "down"' is not assignable to type 'SetStateAction<"random" | "up" | "down">'.
+      Type '"name"' is not assignable to type 'SetStateAction<"random" | "up" | "down">'.
+src/screens/Home/Views/MyPlaylist/index.tsx(43,34): error TS2339: Property 'creator' does not exist on type 'SubscribedPlaylistInfo'.
+src/screens/Home/Views/MyPlaylist/index.tsx(45,38): error TS2339: Property 'playCount' does not exist on type 'SubscribedPlaylistInfo'.
+src/screens/Home/Views/Search/index.tsx(143,30): error TS2322: Type '"kw" | "wy" | "git" | "kg" | "tx" | "mg" | "bi" | "all"' is not assignable to type 'OnlineSource'.
+  Type '"all"' is not assignable to type 'OnlineSource'.
+src/screens/Home/Views/Search/index.tsx(188,13): error TS2322: Type '{ componentId: string; info: ListInfoItem; onBack: () => void; }' is not assignable to type 'IntrinsicAttributes & { info: ListInfoItem; onBack?: () => void; initialScrollToInfo: MusicInfoOnline; }'.
+  Property 'componentId' does not exist on type 'IntrinsicAttributes & { info: ListInfoItem; onBack?: () => void; initialScrollToInfo: MusicInfoOnline; }'.
+src/screens/Home/Views/Setting/Main.tsx(57,12): error TS2678: Type '"search"' is not comparable to type '"download" | "list" | "version" | "about" | "sync" | "basic" | "player" | "lyric_desktop" | "backup" | "other"'.
+src/screens/Home/Views/Setting/settings/Basic/NavMenu.tsx(35,60): error TS2345: Argument of type '"nav_love" | "nav_search" | "nav_setting" | "nav_songlist" | "nav_top" | "nav_daily_rec" | "nav_followed_artists" | "nav_subscribed_albums" | "nav_my_playlist"' is not assignable to parameter of type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'.
+  Type '"nav_daily_rec"' is not assignable to type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'.
+src/screens/Home/Views/Setting/settings/Basic/WyCookie.tsx(79,18): error TS2345: Argument of type '"setting_basic_wy_cookie"' is not assignable to parameter of type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'.
+src/screens/Home/Views/Setting/settings/Basic/WyCookie.tsx(81,24): error TS2345: Argument of type '"setting_basic_wy_cookie_placeholder"' is not assignable to parameter of type '"add_to" | "agree" | "agree_go" | "agree_to" | "back" | "back_home" | "cancel" | "cancel_button_text_2" | "change_position" | "change_position_list_title" | "change_position_music_multi_title" | ... 552 more ... | "setting_basic_nav_menu"'.
+src/screens/Home/Views/Setting/settings/List/MenuSettings.tsx(18,7): error TS2322: Type 'string | number | boolean | Partial<Record<"nav_love" | "nav_search" | "nav_setting" | "nav_songlist" | "nav_top" | "nav_daily_rec" | "nav_followed_artists" | "nav_subscribed_albums" | "nav_my_playlist", boolean>>' is not assignable to type 'boolean'.
+  Type 'string' is not assignable to type 'boolean'.
+src/screens/Home/Views/Setting/settings/Version.tsx(87,19): error TS2322: Type '(silent?: boolean) => Promise<void>' is not assignable to type '(event: GestureResponderEvent) => void'.
+  Types of parameters 'silent' and 'event' are incompatible.
+    Type 'GestureResponderEvent' is not assignable to type 'boolean'.
+src/screens/Home/Views/Setting/Vertical/Main.tsx(37,12): error TS2678: Type '"search"' is not comparable to type '"download" | "list" | "version" | "about" | "sync" | "basic" | "player" | "lyric_desktop" | "backup" | "other"'.
+src/screens/Home/Views/SongList/List.tsx(17,11): error TS2741: Property 'onOpenDetail' is missing in type '{ loadList(source: OnlineSource, sortId: string, tagId: string): Promise<void>; }' but required in type 'ListType'.
+src/screens/PlayDetail/Horizontal/index.tsx(30,41): error TS2339: Property 'comment' does not exist on type '{ name: COMPONENT_IDS; id: string; }[]'.
+src/screens/PlayDetail/Horizontal/index.tsx(39,15): error TS2339: Property 'comment' does not exist on type '{ name: COMPONENT_IDS; id: string; }[]'.
+src/screens/PlayDetail/Horizontal/Pic.tsx(109,13): error TS2322: Type '{ width: string; height: string; borderRadius: number; }' is not assignable to type 'StyleProp<ImageStyle>'.
+  Type '{ width: string; height: string; borderRadius: number; }' is not assignable to type 'ImageStyle'.
+    Types of property 'height' are incompatible.
+      Type 'string' is not assignable to type 'DimensionValue'.
+src/screens/PlayDetail/Vertical/components/Header.tsx(43,35): error TS2339: Property 'singerText' does not exist on type '{ container: { flexDirection: "row"; height: "100%"; }; titleContent: { flex: number; paddingHorizontal: number; justifyContent: "center"; }; title: {}; icon: { paddingLeft: number; paddingRight: number; }; singerContainer: { ...; }; }'.
+src/screens/PlayDetail/Vertical/index.tsx(56,65): error TS2339: Property 'comment' does not exist on type '{ name: COMPONENT_IDS; id: string; }[]'.
+src/screens/PlayDetail/Vertical/index.tsx(65,15): error TS2339: Property 'comment' does not exist on type '{ name: COMPONENT_IDS; id: string; }[]'.
+src/screens/PlayDetail/Vertical/Pic.tsx(99,13): error TS2322: Type '{ width: string; height: string; borderRadius: number; }' is not assignable to type 'StyleProp<ImageStyle>'.
+  Type '{ width: string; height: string; borderRadius: number; }' is not assignable to type 'ImageStyle'.
+    Types of property 'height' are incompatible.
+      Type 'string' is not assignable to type 'DimensionValue'.
+src/screens/PlayDetail/Vertical/Player/components/MoreBtn/index.tsx(95,38): error TS2339: Property 'mv' does not exist on type 'MusicInfoMeta_online | MusicInfoMeta_kg | MusicInfoMeta_tx | MusicInfoMeta_mg | MusicInfoMeta_bi | MusicInfoMeta_local'.
+  Property 'mv' does not exist on type 'MusicInfoMeta_local'.
+src/screens/SimilarSongs/index.tsx(18,20): error TS2345: Argument of type '"SIMILAR_SONGS_SCREEN"' is not assignable to parameter of type 'COMPONENT_IDS'.
+src/screens/SimilarSongs/index.tsx(53,20): error TS2322: Type '{ componentId: string; }' is not assignable to type 'IntrinsicAttributes & { isHome?: boolean; }'.
+  Property 'componentId' does not exist on type 'IntrinsicAttributes & { isHome?: boolean; }'.
+src/screens/SonglistDetail/Header.tsx(138,10): error TS2741: Property 'onBack' is missing in type '{}' but required in type '{ onBack: () => void; }'.
+src/screens/SonglistDetail/index.tsx(61,11): error TS2322: Type 'string | number' is not assignable to type 'number'.
+  Type 'string' is not assignable to type 'number'.
+src/screens/SonglistDetail/index.tsx(152,11): error TS2322: Type '({ action }: { action: "edit" | "delete"; }) => void' is not assignable to type '(menu: { action: string; label: string; }) => void'.
+  Types of parameters '__0' and 'menu' are incompatible.
+    Type '{ action: string; label: string; }' is not assignable to type '{ action: "delete" | "edit"; }'.
+      Types of property 'action' are incompatible.
+        Type 'string' is not assignable to type '"delete" | "edit"'.
+src/store/player/action.ts(32,9): error TS2578: Unused '@ts-expect-error' directive.
+src/theme/themes/index.ts(103,10): error TS1355: A 'const' assertions can only be applied to references to enum members, or string, number, boolean, array, or object literals.
+src/utils/index.ts(191,7): error TS2578: Unused '@ts-expect-error' directive.
+src/utils/index.ts(205,7): error TS2578: Unused '@ts-expect-error' directive.
+src/utils/listManage.ts(468,11): error TS2322: Type '{ meta: { fee?: number; qualitys: LX.Music.MusicQualityType[]; _qualitys: LX.Music._MusicQualityType; albumId?: string | number; originCoverType?: number; ... 5 more ...; toggleMusicInfo?: LX.Music.MusicInfoOnline | null; } | ... 34 more ... | { ...; }; ... 7 more ...; releaseDate?: string | null; }' is not assignable to type 'MusicInfo'.
+  Types of property 'meta' are incompatible.
+    Type '{ fee?: number; qualitys: MusicQualityType[]; _qualitys: Partial<Record<Quality, { size: string; }>>; albumId?: string | number; originCoverType?: number; ... 5 more ...; toggleMusicInfo?: MusicInfoOnline; } | ... 34 more ... | { ...; }' is not assignable to type 'MusicInfoMeta_online'.
+      Type '{ filePath: string; ext: string; songId: string | number; albumName: string; picUrl?: string; toggleMusicInfo?: MusicInfoOnline; }' is missing the following properties from type 'MusicInfoMeta_online': qualitys, _qualitys

@@ -41,7 +41,7 @@ const LeftHeader = () => {
     >
       <View style={styles.left}>
         <Text style={styles.leftTitle} size={18}>
-          {t(id)}
+          {t(id as any)}
         </Text>
       </View>
       {isSearchPage ? headerComponents[id] : <GlobalSearch />}
@@ -75,7 +75,7 @@ const RightHeader = () => {
     >
       <View style={styles.left}>
         <Text style={styles.rightTitle} size={18}>
-          {t(id)}
+          {t(id as any)}
         </Text>
       </View>
       {isSearchPage ? headerComponents[id] : <GlobalSearch />}

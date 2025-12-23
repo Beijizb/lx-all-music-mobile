@@ -140,7 +140,7 @@ export default () => {
   const handleSourceChange: HeaderBarProps['onSourceChange'] = (source) => {
     setSelectedList(null)
     searchInfo.current.source = source
-    void saveSearchSetting({ source })
+    void saveSearchSetting({ source: source as any })
     if (searchState.searchText) {
       listRef.current?.loadList(searchState.searchText, source, searchInfo.current.searchType)
     }
