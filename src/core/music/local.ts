@@ -110,7 +110,7 @@ export const getMusicUrl = async ({
   isRefresh: boolean
   onToggleSource?: (musicInfo?: LX.Music.MusicInfoOnline) => void
   allowToggleSource?: boolean
-}): Promise<string> => {
+}): Promise<string | { url: string; headers?: Record<string, string> }> => {
   if (!isRefresh) {
     const path = await getLocalFilePath(musicInfo)
     // console.log(path)

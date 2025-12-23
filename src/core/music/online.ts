@@ -52,7 +52,7 @@ export const getMusicUrl = async ({
   allowToggleSource?: boolean
   onToggleSource?: (musicInfo?: LX.Music.MusicInfoOnline) => void
   prefer?: 'cookie' | 'api'
-}): Promise<string> => {
+}): Promise<string | { url: string; headers?: Record<string, string> }> => {
   // if (!musicInfo._types[type]) {
   //   // 兼容旧版酷我源搜索列表过滤128k音质的bug
   //   if (!(musicInfo.source == 'kw' && type == '128k')) throw new Error('该歌曲没有可播放的音频')
