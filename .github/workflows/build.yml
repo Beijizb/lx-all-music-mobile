@@ -50,11 +50,13 @@ jobs:
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Upload Debug APK artifact
+        if: github.event_name == 'push'
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
-          retention-days: 3
+          retention-days: 1
+          compression-level: 9
 
   # Release APK 构建（用于创建 GitHub Release）
   build-release:
@@ -177,6 +179,7 @@ jobs:
         run: echo "PACKAGE_NAME=$(node -p "require('./package.json').name")" >> $GITHUB_ENV
 
       - name: Upload Artifact
+        if: github.event_name == 'push'
         uses: ./.github/actions/upload-artifact
         env:
           PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
