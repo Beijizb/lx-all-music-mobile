@@ -302,6 +302,9 @@ export class AppEvent extends Event {
   'wy-cookie-set'(cookie: string) {
     this.emit('wy-cookie-set', cookie)
   }
+  'bi-cookie-set'(cookie: string) {
+    this.emit('bi-cookie-set', cookie)
+  }
   'yt-cookie-set'(cookie: string) {
     this.emit('yt-cookie-set', cookie)
   }

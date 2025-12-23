@@ -16,6 +16,7 @@ import IsAlwaysKeepStatusbarHeight from './IsAlwaysKeepStatusbarHeight'
 import DrawerLayoutPosition from './DrawerLayoutPosition'
 import { useI18n } from '@/lang/i18n'
 import WyCookie from './WyCookie'
+import BiCookie from './BiCookie'
 import NavMenu from "@/screens/Home/Views/Setting/settings/Basic/NavMenu";
 
 export default memo(() => {
@@ -40,6 +41,7 @@ export default memo(() => {
       <Source />
       <SourceName />
       <WyCookie />
+      <BiCookie />
     </Section>
   )
 })

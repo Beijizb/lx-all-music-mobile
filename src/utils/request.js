@@ -114,6 +114,9 @@ const handleRequestData = async (
   if (url.includes('music.163.com')) {
     headers.cookie = settingState.setting['common.wy_cookie']
   }
+  if (url.includes('bilibili.com') || url.includes('bilivideo.com')) {
+    headers.cookie = settingState.setting['common.bi_cookie']
+  }
   options.cache = cache
   if (method.toLocaleLowerCase() === 'post' && !headers['Content-Type']) {
     if (options.form) {
