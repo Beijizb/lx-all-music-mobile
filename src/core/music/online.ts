@@ -157,11 +157,11 @@ export const getMusicUrl = async ({
     onToggleSource,
     isRefresh,
     allowToggleSource,
-  }).then(({ url, quality: targetQuality, musicInfo: targetMusicInfo, isFromCache }) => {
+  }).then(({ url, quality: targetQuality, musicInfo: targetMusicInfo, isFromCache, headers }) => {
     if (targetMusicInfo.id != musicInfo.id && !isFromCache)
       void saveMusicUrl(targetMusicInfo, targetQuality, url)
     void saveMusicUrl(musicInfo, targetQuality, url)
-    return url
+    return headers ? { url, headers } : url
   })
 }
 

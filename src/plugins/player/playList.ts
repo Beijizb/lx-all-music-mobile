@@ -250,11 +250,11 @@ const handlePlayMusic = async (musicInfo: LX.Player.PlayMusic, url: string, time
 }
 let playPromise = Promise.resolve()
 let actionId = Math.random()
-export const playMusic = (musicInfo: LX.Player.PlayMusic, url: string, time: number) => {
+export const playMusic = (musicInfo: LX.Player.PlayMusic, url: string, time: number, headers?: Record<string, string>) => {
   const id = (actionId = Math.random())
   void playPromise.finally(() => {
     if (id != actionId) return
-    playPromise = handlePlayMusic(musicInfo, url, time)
+    playPromise = handlePlayMusic(musicInfo, url, time, headers)
   })
 }
 
