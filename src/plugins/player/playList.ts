@@ -67,8 +67,12 @@ const buildTracks = (
       album,
       artwork,
       userAgent: defaultUserAgent,
-      headers: headers, // 参考 bb.js：支持完整的 headers（包含 referer）
-      musicId: mInfo.id,
+          headers: {
+            ...headers,
+            'User-Agent': defaultUserAgent, // Ensure User-Agent is present
+            'Referer': headers?.referer || headers?.Referer || 'https://www.bilibili.com/', // Ensure Referer is present
+          }, 
+          musicId: mInfo.id,
       // original: { ...musicInfo },
       duration,
     })
