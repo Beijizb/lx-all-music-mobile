@@ -32,6 +32,15 @@ const { LyricModule } = NativeModules
 const getAlpha = (num: number) => num / 100
 const getTextSize = (num: number) => num / 10
 
+const safeNumber = (val: any, def: number = 0): number => {
+  const num = Number(val)
+  return isNaN(num) ? def : num
+}
+const safeString = (val: any, def: string = ''): string => {
+  if (val === null || val === undefined) return def
+  return String(val)
+}
+
 /**
  * 发送歌词事件
  * @param isShow
@@ -76,20 +85,20 @@ export const showDesktopLyricView = async ({
   textPositionY: LX.AppSetting['desktopLyric.textPosition.y']
 }): Promise<void> => {
   return LyricModule.showDesktopLyric({
-    isSingleLine,
-    isShowToggleAnima,
-    isLock,
-    unplayColor,
-    playedColor,
-    shadowColor,
-    alpha: Number(getAlpha(opacity)) || 1,
-    textSize: Number(getTextSize(textSize)) || 18,
-    lyricViewX: Number(positionX) || 0,
-    lyricViewY: Number(positionY) || 0,
-    textX: textPositionX.toUpperCase(),
-    textY: textPositionY.toUpperCase(),
-    width: Number(width) || 100,
-    maxLineNum: Number(maxLineNum) || 5,
+    isSingleLine: Boolean(isSingleLine),
+    isShowToggleAnima: Boolean(isShowToggleAnima),
+    isLock: Boolean(isLock),
+    unplayColor: safeString(unplayColor),
+    playedColor: safeString(playedColor),
+    shadowColor: safeString(shadowColor),
+    alpha: safeNumber(getAlpha(opacity), 1),
+    textSize: safeNumber(getTextSize(textSize), 18),
+    lyricViewX: safeNumber(positionX, 0),
+    lyricViewY: safeNumber(positionY, 0),
+    textX: safeString(textPositionX).toUpperCase(),
+    textY: safeString(textPositionY).toUpperCase(),
+    width: safeNumber(width, 100),
+    maxLineNum: safeNumber(maxLineNum, 5),
   })
 }
 
@@ -106,7 +115,7 @@ export const hideDesktopLyricView = async (): Promise<void> => {
  * @returns {Promise} Promise
  */
 export const play = async (time: number): Promise<void> => {
-  return LyricModule.play(Number(time))
+  return LyricModule.play(safeNumber(time))
 }
 
 /**
@@ -127,11 +136,11 @@ export const setLyric = async (
   translation: string,
   romalrc: string
 ): Promise<void> => {
-  return LyricModule.setLyric(lyric, translation || '', romalrc || '')
+  return LyricModule.setLyric(safeString(lyric), safeString(translation), safeString(romalrc))
 }
 
 export const setPlaybackRate = async (rate: number): Promise<void> => {
-  return LyricModule.setPlaybackRate(Number(rate))
+  return LyricModule.setPlaybackRate(safeNumber(rate))
 }
 
 /**
@@ -139,7 +148,7 @@ export const setPlaybackRate = async (rate: number): Promise<void> => {
  * @param isShowTranslation is show translation
  */
 export const toggleTranslation = async (isShowTranslation: boolean): Promise<void> => {
-  return LyricModule.toggleTranslation(isShowTranslation)
+  return LyricModule.toggleTranslation(Boolean(isShowTranslation))
 }
 
 /**
@@ -147,7 +156,7 @@ export const toggleTranslation = async (isShowTranslation: boolean): Promise<voi
  * @param isShowRoma is show roma lyric
  */
 export const toggleRoma = async (isShowRoma: boolean): Promise<void> => {
-  return LyricModule.toggleRoma(isShowRoma)
+  return LyricModule.toggleRoma(Boolean(isShowRoma))
 }
 
 /**
@@ -155,7 +164,7 @@ export const toggleRoma = async (isShowRoma: boolean): Promise<void> => {
  * @param isLock is lock lyric window
  */
 export const toggleLock = async (isLock: boolean): Promise<void> => {
-  return LyricModule.toggleLock(isLock)
+  return LyricModule.toggleLock(Boolean(isLock))
 }
 
 /**
@@ -169,7 +178,7 @@ export const setColor = async (
   playedColor: string,
   shadowColor: string
 ): Promise<void> => {
-  return LyricModule.setColor(unplayColor, playedColor, shadowColor)
+  return LyricModule.setColor(safeString(unplayColor), safeString(playedColor), safeString(shadowColor))
 }
 
 /**
@@ -177,7 +186,7 @@ export const setColor = async (
  * @param alpha text alpha
  */
 export const setAlpha = async (alpha: number): Promise<void> => {
-  return LyricModule.setAlpha(Number(getAlpha(alpha)))
+  return LyricModule.setAlpha(safeNumber(getAlpha(alpha)))
 }
 
 /**
@@ -185,27 +194,27 @@ export const setAlpha = async (alpha: number): Promise<void> => {
  * @param size text size
  */
 export const setTextSize = async (size: number): Promise<void> => {
-  return LyricModule.setTextSize(Number(getTextSize(size)))
+  return LyricModule.setTextSize(safeNumber(getTextSize(size)))
 }
 
 export const setShowToggleAnima = async (isShowToggleAnima: boolean): Promise<void> => {
-  return LyricModule.setShowToggleAnima(isShowToggleAnima)
+  return LyricModule.setShowToggleAnima(Boolean(isShowToggleAnima))
 }
 
 export const setSingleLine = async (isSingleLine: boolean): Promise<void> => {
-  return LyricModule.setSingleLine(isSingleLine)
+  return LyricModule.setSingleLine(Boolean(isSingleLine))
 }
 
 export const setPosition = async (x: number, y: number): Promise<void> => {
-  return LyricModule.setPosition(Number(x), Number(y))
+  return LyricModule.setPosition(safeNumber(x), safeNumber(y))
 }
 
 export const setMaxLineNum = async (maxLineNum: number): Promise<void> => {
-  return LyricModule.setMaxLineNum(Number(maxLineNum))
+  return LyricModule.setMaxLineNum(safeNumber(maxLineNum))
 }
 
 export const setWidth = async (width: number): Promise<void> => {
-  return LyricModule.setWidth(Number(width))
+  return LyricModule.setWidth(safeNumber(width))
 }
 
 // export const fixViewPosition = async(): Promise<void> => {

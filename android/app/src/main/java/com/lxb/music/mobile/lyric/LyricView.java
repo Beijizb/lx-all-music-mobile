@@ -207,30 +207,40 @@ public class LyricView extends Activity implements View.OnTouchListener {
   private double safeGetDouble(Bundle options, String key, double defaultValue) {
     Object value = options.get(key);
     if (value == null) return defaultValue;
-    if (value instanceof Double) return (Double) value;
-    if (value instanceof Float) return (double) (Float) value;
-    if (value instanceof Integer) return (double) (Integer) value;
-    if (value instanceof String) {
-      try {
-        return Double.parseDouble((String) value);
-      } catch (NumberFormatException e) {
-        return defaultValue;
-      }
+    try {
+      return Double.parseDouble(String.valueOf(value));
+    } catch (Exception e) {
+      return defaultValue;
     }
-    return defaultValue;
+  }
+
+  private String safeGetString(Bundle options, String key, String defaultValue) {
+    Object value = options.get(key);
+    if (value == null) return defaultValue;
+    return String.valueOf(value);
+  }
+
+  private boolean safeGetBoolean(Bundle options, String key, boolean defaultValue) {
+    Object value = options.get(key);
+    if (value == null) return defaultValue;
+    try {
+      return Boolean.parseBoolean(String.valueOf(value));
+    } catch (Exception e) {
+      return defaultValue;
+    }
   }
 
   public void showLyricView(Bundle options) {
-    isLock = options.getBoolean("isLock", isLock);
-    isSingleLine = options.getBoolean("isSingleLine", isSingleLine);
-    isShowToggleAnima = options.getBoolean("isShowToggleAnima", isShowToggleAnima);
-    unplayColor = options.getString("unplayColor", unplayColor);
-    playedColor = options.getString("playedColor", playedColor);
-    shadowColor = options.getString("shadowColor", shadowColor);
+    isLock = safeGetBoolean(options, "isLock", isLock);
+    isSingleLine = safeGetBoolean(options, "isSingleLine", isSingleLine);
+    isShowToggleAnima = safeGetBoolean(options, "isShowToggleAnima", isShowToggleAnima);
+    unplayColor = safeGetString(options, "unplayColor", unplayColor);
+    playedColor = safeGetString(options, "playedColor", playedColor);
+    shadowColor = safeGetString(options, "shadowColor", shadowColor);
     prevViewPercentageX = (float) safeGetDouble(options, "lyricViewX", 0f) / 100f;
     prevViewPercentageY = (float) safeGetDouble(options, "lyricViewY", 0f) / 100f;
-    textX = options.getString("textX", textX);
-    textY = options.getString("textY", textY);
+    textX = safeGetString(options, "textX", textX);
+    textY = safeGetString(options, "textY", textY);
     alpha = (float) safeGetDouble(options, "alpha", alpha);
     textSize = (float) safeGetDouble(options, "textSize", textSize);
     widthPercentage = (float) safeGetDouble(options, "width", 100) / 100f;
