@@ -66,12 +66,12 @@ const buildTracks = (
       artist: mInfo.singer || 'Unknow',
       album,
       artwork,
-      userAgent: defaultUserAgent,
-          headers: {
-            ...headers,
-            'User-Agent': defaultUserAgent, // Ensure User-Agent is present
-            'Referer': headers?.referer || headers?.Referer || 'https://www.bilibili.com/', // Ensure Referer is present
-          }, 
+      userAgent: headers?.['user-agent'] || headers?.['User-Agent'] || defaultUserAgent,
+      headers: {
+        ...headers,
+        'User-Agent': headers?.['user-agent'] || headers?.['User-Agent'] || defaultUserAgent,
+        'Referer': headers?.referer || headers?.Referer || 'https://www.bilibili.com/',
+      }, 
           musicId: mInfo.id,
       // original: { ...musicInfo },
       duration,

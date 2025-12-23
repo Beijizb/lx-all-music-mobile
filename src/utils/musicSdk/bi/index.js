@@ -1205,7 +1205,6 @@ async function getMusicUrl(songInfo, type) {
       accept: '*/*',
       'accept-encoding': 'gzip, deflate, br',
       connection: 'keep-alive',
-      host: host,
       referer: useBvid 
         ? `https://www.bilibili.com/video/${useBvid}`
         : `https://www.bilibili.com/video/av${useAid}`,
