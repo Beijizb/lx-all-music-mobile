@@ -38,7 +38,7 @@ export default forwardRef<MusicAddModalType, MusicAddModalProps>(({ onAdded }, r
   const theme = useTheme()
 
   useEffect(() => {
-    getPlaylistType().then(setPlaylistType)
+    getPlaylistType().then((type) => setPlaylistType(type as 'local' | 'online'))
   }, [])
 
   const handlePlaylistTypeChange = (type: 'local' | 'online') => {
@@ -139,10 +139,10 @@ export default forwardRef<MusicAddModalType, MusicAddModalProps>(({ onAdded }, r
           <Title musicInfo={selectInfo.musicInfo} isMove={selectInfo.isMove} />
           <View style={{ flexDirection: 'row', justifyContent: 'center', paddingVertical: 10 }}>
             <Button onPress={() => handlePlaylistTypeChange('local')} style={{ marginRight: 10, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4, backgroundColor: playlistType === 'local' ? theme['c-button-background-active'] : theme['c-button-background'] }}>
-              <Text color={theme['c-button-font']}>本地歌单</Text>
+              <Text style={{ color: theme['c-button-font'] }}>本地歌单</Text>
             </Button>
             <Button onPress={() => handlePlaylistTypeChange('online')} style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 4, backgroundColor: playlistType === 'online' ? theme['c-button-background-active'] : theme['c-button-background'] }}>
-              <Text color={theme['c-button-font']}>在线歌单</Text>
+              <Text style={{ color: theme['c-button-font'] }}>在线歌单</Text>
             </Button>
           </View>
           <List musicInfo={selectInfo.musicInfo} onPress={handleSelect} playlistType={playlistType} />

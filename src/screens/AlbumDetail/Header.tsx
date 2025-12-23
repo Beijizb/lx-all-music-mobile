@@ -15,7 +15,7 @@ import { addWySubscribedAlbum, removeWySubscribedAlbum } from '@/store/user/acti
 import { type SubscribedAlbumInfo } from '@/store/user/state';
 
 
-export default memo(({ albumInfo, componentId }) => {
+export default memo(({ albumInfo, componentId }: { albumInfo: any; componentId: string }) => {
   const theme = useTheme();
   const statusBarHeight = useStatusbarHeight();
   const isSubscribed = useIsWyAlbumSubscribed(albumInfo.id);

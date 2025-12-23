@@ -12,7 +12,7 @@ import { useIsWyArtistFollowed } from '@/store/user/hook'
 import { addWyFollowedArtist, removeWyFollowedArtist } from '@/store/user/action'
 import { type FollowedArtistInfo } from '@/store/user/state'
 
-export default memo(({ artist, onFollow, componentId }) => {
+export default memo(({ artist, onFollow, componentId }: { artist: any; onFollow?: () => void; componentId: string }) => {
   const theme = useTheme()
   const statusBarHeight = useStatusbarHeight()
   const [isDescExpanded, setDescExpanded] = useState(false)
