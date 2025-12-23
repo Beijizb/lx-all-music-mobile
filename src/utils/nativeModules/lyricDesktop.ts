@@ -206,7 +206,7 @@ export const setSingleLine = async (isSingleLine: boolean): Promise<void> => {
 }
 
 export const setPosition = async (x: number, y: number): Promise<void> => {
-  return LyricModule.setPosition(safeNumber(x), safeNumber(y))
+  console.warn('setPosition is not implemented in Native module')
 }
 
 export const setMaxLineNum = async (maxLineNum: number): Promise<void> => {

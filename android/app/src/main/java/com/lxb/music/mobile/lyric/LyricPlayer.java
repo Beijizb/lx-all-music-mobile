@@ -99,7 +99,8 @@ public class LyricPlayer {
       tags.put(key, val);
     }
 
-    String offsetStr = (String) tags.get("offset");
+    Object offsetObj = tags.get("offset");
+    String offsetStr = offsetObj == null ? "" : String.valueOf(offsetObj);
     if (offsetStr == null || offsetStr.equals("")) {
       tags.put("offset", 0);
     } else {
@@ -258,7 +259,19 @@ public class LyricPlayer {
 
     Object tagOffset = tags.get("offset");
     if (tagOffset == null) tagOffset = 0;
-    performanceTime = getNow() - (int) tagOffset - offset;
+    int tagOffsetInt;
+    if (tagOffset instanceof String) {
+        try {
+            tagOffsetInt = Integer.parseInt((String) tagOffset);
+        } catch (Exception e) {
+            tagOffsetInt = 0;
+        }
+    } else if (tagOffset instanceof Integer) {
+        tagOffsetInt = (Integer) tagOffset;
+    } else {
+        tagOffsetInt = 0;
+    }
+    performanceTime = getNow() - tagOffsetInt - offset;
     startPlayTime = curTime;
 
     curLineNum = findCurLineNum(getCurrentTime()) - 1;
@@ -266,12 +279,25 @@ public class LyricPlayer {
     refresh();
   }
 
+  private int getLineTime(HashMap line) {
+    Object time = line.get("time");
+    if (time instanceof Integer) return (int) time;
+    if (time instanceof String) {
+      try {
+        return Integer.parseInt((String) time);
+      } catch (Exception e) {
+        return 0;
+      }
+    }
+    return 0;
+  }
+
   private int findCurLineNum(int curTime, int startIndex) {
     // Log.d("Lyric", "findCurLineNum: " + startIndex);
     if (curTime <= 0) return 0;
     int length = lines.size();
     for (int index = startIndex; index < length; index++) {
-      if (curTime < (int) ((HashMap)lines.get(index)).get("time")) return index == 0 ? 0 : index - 1;
+      if (curTime < getLineTime(lines.get(index))) return index == 0 ? 0 : index - 1;
     }
     return length - 1;
   }
@@ -298,12 +324,12 @@ public class LyricPlayer {
     HashMap curLine = lines.get(curLineNum);
 
     int currentTime = getCurrentTime();
-    int driftTime = currentTime - (int)curLine.get("time");
+    int driftTime = currentTime - getLineTime(curLine);
     // Log.d("Lyric", "driftTime: " + driftTime + "  time: " + curLine.get("time") + "  currentTime: " + currentTime);
 
     if (driftTime >= 0 || curLineNum == 0) {
       HashMap nextLine = lines.get(curLineNum + 1);
-      int delay = (int)(((int)nextLine.get("time") - (int)curLine.get("time") - driftTime) / this.playbackRate);
+      int delay = (int)((getLineTime(nextLine) - getLineTime(curLine) - driftTime) / this.playbackRate);
       // Log.d("Lyric", "delay: " + delay + "  driftTime: " + driftTime);
       if (delay > 0) {
         if (isPlay) {

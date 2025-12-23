@@ -58,7 +58,7 @@ public class LyricModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void removeListeners(Integer count) {
+  public void removeListeners(int count) {
     listenerCount -= count;
     if (listenerCount == 0) {
       // Remove upstream listeners, stop unnecessary background tasks

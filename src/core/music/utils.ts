@@ -481,6 +481,19 @@ export const handleGetOnlinePicUrl = async ({
   isFromCache: boolean
 }> => {
   // console.log(musicInfo.source)
+  if (musicInfo.source === 'bi' || musicInfo.source === 'bilibili') {
+    return {
+      musicInfo,
+      lyricInfo: {
+        lyric: '',
+        tlyric: '',
+        rlyric: '',
+        lxlyric: '',
+      },
+      isFromCache: false,
+    }
+  }
+
   let reqPromise
   try {
     reqPromise = musicSdk[musicInfo.source].getPic(toOldMusicInfo(musicInfo))
