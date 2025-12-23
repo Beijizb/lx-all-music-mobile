@@ -82,14 +82,14 @@ export const showDesktopLyricView = async ({
     unplayColor,
     playedColor,
     shadowColor,
-    alpha: getAlpha(opacity),
-    textSize: getTextSize(textSize),
-    lyricViewX: positionX,
-    lyricViewY: positionY,
+    alpha: Number(getAlpha(opacity)),
+    textSize: Number(getTextSize(textSize)),
+    lyricViewX: Number(positionX),
+    lyricViewY: Number(positionY),
     textX: textPositionX.toUpperCase(),
     textY: textPositionY.toUpperCase(),
-    width,
-    maxLineNum,
+    width: Number(width),
+    maxLineNum: Number(maxLineNum),
   })
 }
 

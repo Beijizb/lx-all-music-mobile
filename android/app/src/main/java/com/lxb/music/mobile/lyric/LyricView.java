@@ -204,6 +204,22 @@ public class LyricView extends Activity implements View.OnTouchListener {
 //    }
 //  }
 // boolean isLock, String themeColor, float alpha, int lyricViewX, int lyricViewY, String textX, String textY
+  private double safeGetDouble(Bundle options, String key, double defaultValue) {
+    Object value = options.get(key);
+    if (value == null) return defaultValue;
+    if (value instanceof Double) return (Double) value;
+    if (value instanceof Float) return (double) (Float) value;
+    if (value instanceof Integer) return (double) (Integer) value;
+    if (value instanceof String) {
+      try {
+        return Double.parseDouble((String) value);
+      } catch (NumberFormatException e) {
+        return defaultValue;
+      }
+    }
+    return defaultValue;
+  }
+
   public void showLyricView(Bundle options) {
     isLock = options.getBoolean("isLock", isLock);
     isSingleLine = options.getBoolean("isSingleLine", isSingleLine);
@@ -211,14 +227,14 @@ public class LyricView extends Activity implements View.OnTouchListener {
     unplayColor = options.getString("unplayColor", unplayColor);
     playedColor = options.getString("playedColor", playedColor);
     shadowColor = options.getString("shadowColor", shadowColor);
-    prevViewPercentageX = (float) options.getDouble("lyricViewX", 0f) / 100f;
-    prevViewPercentageY = (float) options.getDouble("lyricViewY", 0f) / 100f;
+    prevViewPercentageX = (float) safeGetDouble(options, "lyricViewX", 0f) / 100f;
+    prevViewPercentageY = (float) safeGetDouble(options, "lyricViewY", 0f) / 100f;
     textX = options.getString("textX", textX);
     textY = options.getString("textY", textY);
-    alpha = (float) options.getDouble("alpha", alpha);
-    textSize = (float) options.getDouble("textSize", textSize);
-    widthPercentage = (float) options.getDouble("width", 100) / 100f;
-    maxLineNum = (int) options.getDouble("maxLineNum", maxLineNum);
+    alpha = (float) safeGetDouble(options, "alpha", alpha);
+    textSize = (float) safeGetDouble(options, "textSize", textSize);
+    widthPercentage = (float) safeGetDouble(options, "width", 100) / 100f;
+    maxLineNum = (int) safeGetDouble(options, "maxLineNum", maxLineNum);
     handleShowLyric();
     listenOrientationEvent();
   }
