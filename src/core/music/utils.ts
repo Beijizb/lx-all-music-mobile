@@ -364,6 +364,7 @@ export const handleGetOnlineMusicUrl = async ({
   musicInfo: LX.Music.MusicInfoOnline
   quality: LX.Quality
   isFromCache: boolean
+  headers?: Record<string, string>
 }> => {
   if (!(await global.lx.apiInitPromise[0])) throw new Error('source init failed')
   // console.log(musicInfo.source)

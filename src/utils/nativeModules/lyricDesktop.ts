@@ -106,7 +106,7 @@ export const hideDesktopLyricView = async (): Promise<void> => {
  * @returns {Promise} Promise
  */
 export const play = async (time: number): Promise<void> => {
-  return LyricModule.play(time)
+  return LyricModule.play(Number(time))
 }
 
 /**
@@ -131,7 +131,7 @@ export const setLyric = async (
 }
 
 export const setPlaybackRate = async (rate: number): Promise<void> => {
-  return LyricModule.setPlaybackRate(rate)
+  return LyricModule.setPlaybackRate(Number(rate))
 }
 
 /**
@@ -177,7 +177,7 @@ export const setColor = async (
  * @param alpha text alpha
  */
 export const setAlpha = async (alpha: number): Promise<void> => {
-  return LyricModule.setAlpha(getAlpha(alpha))
+  return LyricModule.setAlpha(Number(getAlpha(alpha)))
 }
 
 /**
@@ -185,7 +185,7 @@ export const setAlpha = async (alpha: number): Promise<void> => {
  * @param size text size
  */
 export const setTextSize = async (size: number): Promise<void> => {
-  return LyricModule.setTextSize(getTextSize(size))
+  return LyricModule.setTextSize(Number(getTextSize(size)))
 }
 
 export const setShowToggleAnima = async (isShowToggleAnima: boolean): Promise<void> => {
@@ -197,15 +197,15 @@ export const setSingleLine = async (isSingleLine: boolean): Promise<void> => {
 }
 
 export const setPosition = async (x: number, y: number): Promise<void> => {
-  return LyricModule.setPosition(x, y)
+  return LyricModule.setPosition(Number(x), Number(y))
 }
 
 export const setMaxLineNum = async (maxLineNum: number): Promise<void> => {
-  return LyricModule.setMaxLineNum(maxLineNum)
+  return LyricModule.setMaxLineNum(Number(maxLineNum))
 }
 
 export const setWidth = async (width: number): Promise<void> => {
-  return LyricModule.setWidth(width)
+  return LyricModule.setWidth(Number(width))
 }
 
 // export const fixViewPosition = async(): Promise<void> => {
