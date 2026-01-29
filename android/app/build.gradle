@@ -148,7 +148,7 @@ android {
              * ✅ 只为测试 debug 出包：release 不启用混淆，不强制 release 签名
              * 这样就算没 keystore 也不会让 CI 挂。
              */
-            signingConfig signingConfigs.release
+            signingConfig signingConfigs.debug
             minifyEnabled false
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
