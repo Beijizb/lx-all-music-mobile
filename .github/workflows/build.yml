@@ -153,7 +153,12 @@ jobs:
             rm -f "${TARGET_FILE}"
           else
             echo "使用临时签名配置（secrets 未配置或无效）..."
-            ./gradlew assembleRelease
+            # 显式传递临时生成的 android/android 密码
+            ./gradlew assembleRelease \
+              -PMYAPP_UPLOAD_STORE_FILE="ci.keystore" \
+              -PMYAPP_UPLOAD_KEY_ALIAS="ci-key" \
+              -PMYAPP_UPLOAD_STORE_PASSWORD="android" \
+              -PMYAPP_UPLOAD_KEY_PASSWORD="android"
           fi
 
       - name: Get package version
