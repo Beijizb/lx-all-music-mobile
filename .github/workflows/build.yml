@@ -118,16 +118,15 @@ jobs:
           # 如果没有签名配置，创建临时的 keystore
           if [ ! -f "keystore.properties" ]; then
             echo "创建临时签名配置..."
-            # 检查 keystore 文件是否存在，如果不存在则创建
-            if [ ! -f "app/debug.keystore" ]; then
-              keytool -genkeypair -v -storetype PKCS12 -keystore app/debug.keystore -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-            else
-              echo "debug.keystore 已存在，跳过创建"
-            fi
-            echo "storeFile=debug.keystore" > keystore.properties
-            echo "keyAlias=androiddebugkey" >> keystore.properties
-            echo "storePassword=android" >> keystore.properties
-            echo "keyPassword=android" >> keystore.properties
+            # 总是创建新的临时 keystore，避免使用仓库中可能密码不匹配的 debug.keystore
+            rm -f app/ci.keystore
+            keytool -genkeypair -v -storetype PKCS12 -keystore app/ci.keystore -alias ci-key -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+            
+            # 使用 build.gradle 中识别的键名 (MYAPP_UPLOAD_...)
+            echo "MYAPP_UPLOAD_STORE_FILE=ci.keystore" > keystore.properties
+            echo "MYAPP_UPLOAD_KEY_ALIAS=ci-key" >> keystore.properties
+            echo "MYAPP_UPLOAD_STORE_PASSWORD=android" >> keystore.properties
+            echo "MYAPP_UPLOAD_KEY_PASSWORD=android" >> keystore.properties
           fi
           # 检查是否有有效的签名 secrets
           chmod +x ./gradlew
