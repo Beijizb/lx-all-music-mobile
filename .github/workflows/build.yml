@@ -115,6 +115,12 @@ jobs:
         shell: bash
         run: |
           cd android
+          
+          # 物理清除：删除可能存在的旧 keystore 文件，防止干扰
+          echo "清理旧的 keystore 文件..."
+          rm -f app/*.keystore
+          rm -f app/*.jks
+          
           # 如果没有签名配置，创建临时的 keystore
           if [ ! -f "keystore.properties" ]; then
             echo "创建临时签名配置..."
