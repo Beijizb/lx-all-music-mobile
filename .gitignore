@@ -70,3 +70,8 @@ buck-out/
 # IDE
 .cursor/
 .env
+
+# Android Release Keystore Secrets
+keystore-secrets.txt
+scripts/release.keystore
+scripts/keystore-secrets.txt

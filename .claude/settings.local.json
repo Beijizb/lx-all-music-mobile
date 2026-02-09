@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(__NEW_LINE_abc79159a43544e5__ $fileContent)",
+      "Bash(gh run list:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)",
+      "Bash(node:*)"
+    ]
+  }
+}
