@@ -9,7 +9,8 @@
       "Bash(node:*)",
       "Bash(npm run type-check)",
       "Bash(npm run version:build)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(git push:*)"
     ]
   }
 }

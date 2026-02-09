@@ -14,7 +14,7 @@ import { View } from 'react-native'
 import ModernPlayInfo from './ModernPlayInfo'
 import ModernProgress from './ModernProgress'
 import ModernControlBtn from './ModernControlBtn'
-import MoreBtn from '../../Player/components/MoreBtn'
+import MoreBtn from '../Player/components/MoreBtn'
 
 import { createStyle } from '@/utils/tools'
 import { NAV_SHEAR_NATIVE_IDS } from '@/config/constant'
