@@ -5,9 +5,9 @@ import Header from './components/Header'
 // import Aside from './components/Aside'
 // import Main from './components/Main'
 import MiniLyric from '../components/MiniLyric';
-import Player from './Player'
+import ModernPlayer from './components/ModernPlayer'
 import PagerView, { type PagerViewOnPageSelectedEvent } from 'react-native-pager-view'
-import Pic from './Pic'
+import ModernCover from './components/ModernCover'
 import Lyric from './Lyric'
 import { screenkeepAwake, screenUnkeepAwake } from '@/utils/nativeModules/utils'
 import commonState, { type InitState as CommonState } from '@/store/common/state'
@@ -87,7 +87,7 @@ export default memo(({ componentId }: { componentId: string }) => {
         >
           <View collapsable={false}>
             <View collapsable={false} style={styles.picPageContainer}>
-              <Pic componentId={componentId} />
+              <ModernCover componentId={componentId} />
               <MiniLyric
                 onPress={handleSwitchToLyricPage}
                 style={styles.miniLyricContainer}
@@ -102,7 +102,7 @@ export default memo(({ componentId }: { componentId: string }) => {
           <View style={{ ...styles.pageIndicatorItem, backgroundColor: pageIndex == 0 ? theme['c-primary-light-100-alpha-700'] : theme['c-primary-alpha-900'] }}></View>
           <View style={{ ...styles.pageIndicatorItem, backgroundColor: pageIndex == 1 ? theme['c-primary-light-100-alpha-700'] : theme['c-primary-alpha-900'] }}></View>
         </View> */}
-        <Player componentId={componentId} />
+        <ModernPlayer componentId={componentId} />
       </View>
     </>
   )

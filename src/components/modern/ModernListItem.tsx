@@ -10,7 +10,7 @@
  * - 长按菜单
  */
 
-import React, { useRef } from 'react'
+import React, { useRef, type Ref } from 'react'
 import {
   View,
   StyleSheet,
@@ -18,6 +18,7 @@ import {
   Animated,
   ViewStyle,
   StyleProp,
+  TouchableOpacity,
 } from 'react-native'
 import { useTheme } from '@/store/theme/hook'
 import themeState from '@/store/theme/state'
@@ -26,6 +27,8 @@ import Text from '@/components/common/Text'
 import Image from '@/components/common/Image'
 import Icon from '@/components/common/Icon'
 import Badge from '@/components/common/Badge'
+
+export type BadgeType = 'normal' | 'sq' | 'hq' | 'vip'
 
 export interface ModernListItemProps {
   // 基本信息
@@ -36,16 +39,21 @@ export interface ModernListItemProps {
   // 显示选项
   coverSize?: 60 | 70 | 80
   showBadge?: boolean
-  badgeType?: 'normal' | 'sq' | 'hq' | 'vip'
+  badgeType?: BadgeType
   showIndex?: boolean
   index?: number
   showDuration?: boolean
   duration?: string
 
+  // 状态
+  isActive?: boolean
+  isSelected?: boolean
+
   // 交互
   onPress?: () => void
   onLongPress?: () => void
   onMorePress?: () => void
+  moreButtonRef?: Ref<TouchableOpacity>
 
   // 样式
   style?: StyleProp<ViewStyle>
@@ -63,9 +71,12 @@ export default function ModernListItem({
   index,
   showDuration = true,
   duration,
+  isActive = false,
+  isSelected = false,
   onPress,
   onLongPress,
   onMorePress,
+  moreButtonRef,
   style,
   disabled = false,
 }: ModernListItemProps) {
@@ -130,6 +141,9 @@ export default function ModernListItem({
           {
             paddingHorizontal: frameworkStyles.paddingHorizontal,
             paddingVertical: frameworkStyles.paddingVertical,
+            backgroundColor: isSelected
+              ? theme['c-primary-background-hover']
+              : 'transparent',
             transform: [{ scale: scaleAnim }],
           },
           style,
@@ -140,7 +154,9 @@ export default function ModernListItem({
           <View style={styles.indexContainer}>
             <Text
               size={14}
-              color={theme['c-font-label']}
+              color={
+                isActive ? theme['c-primary-font'] : theme['c-font-label']
+              }
               style={styles.indexText}
             >
               {index}
@@ -192,7 +208,7 @@ export default function ModernListItem({
           <View style={styles.titleRow}>
             <Text
               size={16}
-              color={theme['c-font']}
+              color={isActive ? theme['c-primary-font'] : theme['c-font']}
               numberOfLines={1}
               style={styles.title}
             >
@@ -231,7 +247,8 @@ export default function ModernListItem({
 
           {/* 更多按钮 */}
           {onMorePress && (
-            <Pressable
+            <TouchableOpacity
+              ref={moreButtonRef}
               onPress={onMorePress}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               style={styles.moreButton}
@@ -241,7 +258,7 @@ export default function ModernListItem({
                 size={20}
                 color={theme['c-font-label']}
               />
-            </Pressable>
+            </TouchableOpacity>
           )}
         </View>
       </Animated.View>

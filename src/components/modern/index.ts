@@ -10,7 +10,7 @@ export { default as ModernButton } from './ModernButton'
 export type { ModernButtonProps } from './ModernButton'
 
 export { default as ModernListItem } from './ModernListItem'
-export type { ModernListItemProps } from './ModernListItem'
+export type { ModernListItemProps, BadgeType } from './ModernListItem'
 
 export { default as QuickActionCard } from './QuickActionCard'
 export type { QuickActionCardProps } from './QuickActionCard'
