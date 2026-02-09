@@ -3,9 +3,13 @@ import { setShouldUseDarkColors, applyTheme } from '@/core/theme'
 import { getTheme } from '@/theme/themes/index'
 import settingState from '@/store/setting/state'
 import StatusBar from '@/components/common/StatusBar'
+import { initializeThemeFramework } from '@/utils/themeFrameworkInit'
 // import { Dimensions, PixelRatio } from 'react-native'
 
 export default async (setting: LX.AppSetting) => {
+  // 初始化主题框架（Material Design / iOS Cupertino）
+  await initializeThemeFramework()
+
   if (getIsSupportedAutoTheme()) {
     setShouldUseDarkColors(getAppearance() == 'dark')
 

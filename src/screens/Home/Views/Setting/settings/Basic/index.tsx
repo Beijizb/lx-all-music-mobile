@@ -14,6 +14,7 @@ import IsHomePageScroll from './IsHomePageScroll'
 import IsUseSystemFileSelector from './IsUseSystemFileSelector'
 import IsAlwaysKeepStatusbarHeight from './IsAlwaysKeepStatusbarHeight'
 import DrawerLayoutPosition from './DrawerLayoutPosition'
+import ThemeFramework from './ThemeFramework'
 import { useI18n } from '@/lang/i18n'
 import WyCookie from './WyCookie'
 import BiCookie from './BiCookie'
@@ -33,6 +34,7 @@ export default memo(() => {
       <IsUseSystemFileSelector />
       <IsAlwaysKeepStatusbarHeight />
       <Theme />
+      <ThemeFramework />
       <DrawerLayoutPosition />
       <NavMenu />
       <Language />
