@@ -145,10 +145,10 @@ android {
         }
         release {
             /**
-             * ✅ 只为测试 debug 出包：release 不启用混淆，不强制 release 签名
-             * 这样就算没 keystore 也不会让 CI 挂。
+             * ✅ 使用 release 签名配置（如果没有则回退到 debug）
+             * 确保 APK 有签名，否则无法安装
              */
-            // signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
