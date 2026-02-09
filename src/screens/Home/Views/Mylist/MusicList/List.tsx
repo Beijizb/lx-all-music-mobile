@@ -14,6 +14,7 @@ import { getListPosition, getListPrevSelectId, saveListPosition } from '@/utils/
 // import { useMusicList } from '@/store/list/hook'
 import { getListMusics, setActiveList } from '@/core/list'
 import ListItem, { ITEM_HEIGHT } from './ListItem'
+import ModernListItem from './ModernListItem'
 import { createStyle, getRowInfo } from '@/utils/tools'
 import { usePlayInfo, usePlayMusicInfo } from '@/store/player/hook'
 import type { Position } from './ListMenu'
@@ -292,8 +293,9 @@ const List = forwardRef<ListType, ListProps>(
           />
         );
       } else {
+        // 使用现代化列表项
         return (
-          <ListItem
+          <ModernListItem
             item={item}
             index={index}
             activeIndex={activeIndex}
@@ -301,7 +303,6 @@ const List = forwardRef<ListType, ListProps>(
             onLongPress={handleLongPress}
             onShowMenu={onShowMenu}
             selectedList={selectedList}
-            rowInfo={rowInfo.current}
             isShowAlbumName={isShowAlbumName}
             isShowInterval={isShowInterval}
             showCover={showCover}
@@ -320,13 +321,14 @@ const List = forwardRef<ListType, ListProps>(
         onScroll={handleScroll}
         style={styles.list}
         data={currentList}
-        maxToRenderPerBatch={4}
+        // 性能优化参数
+        maxToRenderPerBatch={10}
         numColumns={rowInfo.current.rowNum}
         horizontal={false}
-        // updateCellsBatchingPeriod={80}
-        windowSize={8}
+        updateCellsBatchingPeriod={50}
+        windowSize={21}
         removeClippedSubviews={true}
-        initialNumToRender={12}
+        initialNumToRender={15}
         renderItem={renderItem}
         keyExtractor={getkey}
         extraData={activeIndex}
