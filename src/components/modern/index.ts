@@ -11,3 +11,15 @@ export type { ModernButtonProps } from './ModernButton'
 
 export { default as ModernListItem } from './ModernListItem'
 export type { ModernListItemProps } from './ModernListItem'
+
+export { default as QuickActionCard } from './QuickActionCard'
+export type { QuickActionCardProps } from './QuickActionCard'
+
+export { default as PlaylistCard } from './PlaylistCard'
+export type { PlaylistCardProps } from './PlaylistCard'
+
+export { default as ModernListHeader } from './ModernListHeader'
+export type { ModernListHeaderProps } from './ModernListHeader'
+
+export { default as ModernSearchBar } from './ModernSearchBar'
+export type { ModernSearchBarProps } from './ModernSearchBar'
