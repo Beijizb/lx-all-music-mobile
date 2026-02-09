@@ -116,6 +116,7 @@ const defaultSetting: LX.AppSetting = {
   'theme.id': 'green',
   'theme.lightId': 'green',
   'theme.darkId': 'black',
+  'theme.framework': null, // null 表示使用平台推荐，可选值: 'material' | 'cupertino'
   'theme.hideBgDark': false,
   'theme.dynamicBg': true,
   'theme.blur': 18,

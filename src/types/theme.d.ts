@@ -321,6 +321,8 @@ declare global {
         isDark: boolean
         colors: Record<string, string>
       }
+      /** 主题框架类型 */
+      framework?: 'material' | 'cupertino'
     }
   }
 }

@@ -1,9 +1,12 @@
 import { createContext } from 'react'
+import { ThemeFrameworkType, getRecommendedFramework } from '@/theme/ThemeFramework'
 // import type { RootState } from '@/store'
 
 interface InitState {
   shouldUseDarkColors: boolean
   theme: LX.ActiveTheme
+  /** 当前主题框架 */
+  framework: ThemeFrameworkType
 }
 
 const theme = {
@@ -248,6 +251,7 @@ const theme = {
 
 const state: InitState = {
   shouldUseDarkColors: false,
+  framework: getRecommendedFramework(), // 默认根据平台推荐
   theme: {
     ...theme,
     'c-app-background': theme['c-primary-light-600-alpha-600'],
