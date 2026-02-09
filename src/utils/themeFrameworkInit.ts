@@ -3,7 +3,7 @@
  * 在应用启动时加载用户保存的主题框架设置
  */
 
-import { getSetting } from '@/core/common'
+import settingState from '@/store/setting/state'
 import themeAction from '@/store/theme/action'
 import { ThemeFrameworkType, getRecommendedFramework } from '@/theme/ThemeFramework'
 
@@ -13,8 +13,7 @@ import { ThemeFrameworkType, getRecommendedFramework } from '@/theme/ThemeFramew
  */
 export async function initializeThemeFramework(): Promise<void> {
   try {
-    const settings = await getSetting()
-    const savedFramework = settings['theme.framework'] as ThemeFrameworkType | null
+    const savedFramework = settingState.setting['theme.framework'] as ThemeFrameworkType | null
 
     if (savedFramework && Object.values(ThemeFrameworkType).includes(savedFramework)) {
       // 使用用户保存的框架

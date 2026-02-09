@@ -123,6 +123,12 @@ declare global {
       'theme.fontShadow': boolean
 
       /**
+       * 主题框架类型
+       * null 表示使用平台推荐，可选值: 'material' | 'cupertino'
+       */
+      'theme.framework': 'material' | 'cupertino' | null
+
+      /**
        * 启动时自动播放歌曲
        */
       'player.startupAutoPlay': boolean

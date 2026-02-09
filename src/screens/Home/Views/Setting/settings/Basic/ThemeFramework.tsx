@@ -15,7 +15,7 @@ import {
 import SubTitle from '../../components/SubTitle'
 import Button from '../../components/Button'
 import Text from '@/components/common/Text'
-import { setSetting } from '@/core/common'
+import { updateSetting } from '@/core/common'
 
 export default memo(() => {
   const theme = useTheme()
@@ -28,7 +28,7 @@ export default memo(() => {
     themeAction.setFramework(framework)
 
     // 保存到设置
-    await setSetting({
+    updateSetting({
       'theme.framework': framework,
     })
   }
