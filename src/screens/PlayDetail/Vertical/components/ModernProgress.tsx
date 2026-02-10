@@ -1,18 +1,17 @@
 /**
- * ModernProgress - 现代化进度条组件
+ * ModernProgress - Apple Music 风格进度条
  *
  * 新特性：
- * - 更粗的进度条（8px）
- * - 拖动时放大效果
- * - 显示缓冲进度
- * - 更好的触摸反馈
+ * - 微弱的默认轨道（透明度12%）
+ * - 交互时轨道变亮（45% → 80%）
+ * - 滑块从隐藏到显示
+ * - 更细的进度条（3px）
+ * - 流畅的动画过渡（200ms）
  */
 
 import { memo, useRef, useState, useCallback } from 'react'
 import { View, Animated, PanResponder } from 'react-native'
 import { useTheme } from '@/store/theme/hook'
-import themeState from '@/store/theme/state'
-import { ThemeFrameworkType } from '@/theme/ThemeFramework'
 import Text from '@/components/common/Text'
 import { usePlayerProgress, usePlayerBufferedProgress } from '@/store/player/hook'
 import { seek } from '@/plugins/player'
@@ -21,16 +20,16 @@ import { createStyle } from '@/utils/tools'
 
 export default memo(() => {
   const theme = useTheme()
-  const framework = themeState.framework
   const progress = usePlayerProgress()
   const bufferedProgress = usePlayerBufferedProgress()
 
   const [isDragging, setIsDragging] = useState(false)
   const [tempProgress, setTempProgress] = useState(0)
-  const scaleAnim = useRef(new Animated.Value(1)).current
-  const containerWidth = useRef(0)
 
-  const isMaterial = framework === ThemeFrameworkType.MATERIAL
+  // 动画值
+  const trackOpacityAnim = useRef(new Animated.Value(0.12)).current
+  const thumbOpacityAnim = useRef(new Animated.Value(0)).current
+  const containerWidth = useRef(0)
 
   // 拖动手势
   const panResponder = useRef(
@@ -40,13 +39,19 @@ export default memo(() => {
 
       onPanResponderGrant: () => {
         setIsDragging(true)
-        // 拖动时放大
-        Animated.spring(scaleAnim, {
-          toValue: 1.5,
-          useNativeDriver: true,
-          tension: 300,
-          friction: 20,
-        }).start()
+        // 交互时：轨道变亮，滑块显示
+        Animated.parallel([
+          Animated.timing(trackOpacityAnim, {
+            toValue: 0.8,
+            duration: 200,
+            useNativeDriver: false,
+          }),
+          Animated.timing(thumbOpacityAnim, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: false,
+          }),
+        ]).start()
       },
 
       onPanResponderMove: (_, gestureState) => {
@@ -61,13 +66,19 @@ export default memo(() => {
 
       onPanResponderRelease: () => {
         setIsDragging(false)
-        // 恢复原大小
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          useNativeDriver: true,
-          tension: 300,
-          friction: 20,
-        }).start()
+        // 恢复默认状态
+        Animated.parallel([
+          Animated.timing(trackOpacityAnim, {
+            toValue: 0.12,
+            duration: 200,
+            useNativeDriver: false,
+          }),
+          Animated.timing(thumbOpacityAnim, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: false,
+          }),
+        ]).start()
 
         // 跳转到指定位置
         if (progress.maxTime > 0) {
@@ -85,8 +96,8 @@ export default memo(() => {
   const currentProgress = isDragging ? tempProgress : progress.progress
   const buffered = bufferedProgress.progress
 
-  // 进度条高度
-  const progressHeight = isMaterial ? 8 : 6
+  // Apple Music 风格：更细的进度条
+  const progressHeight = 3
 
   return (
     <View style={styles.container}>
@@ -106,14 +117,15 @@ export default memo(() => {
         onLayout={onLayout}
         {...panResponder.panHandlers}
       >
-        {/* 背景轨道 */}
-        <View
+        {/* 背景轨道 - 动态透明度 */}
+        <Animated.View
           style={[
             styles.progressTrack,
             {
               height: progressHeight,
               borderRadius: progressHeight / 2,
-              backgroundColor: theme['c-primary-light-400-alpha-700'],
+              backgroundColor: theme['c-font-label'],
+              opacity: trackOpacityAnim,
             },
           ]}
         >
@@ -125,7 +137,8 @@ export default memo(() => {
                 width: `${buffered * 100}%`,
                 height: progressHeight,
                 borderRadius: progressHeight / 2,
-                backgroundColor: theme['c-primary-light-200-alpha-700'],
+                backgroundColor: theme['c-primary-light-200'],
+                opacity: 0.5,
               },
             ]}
           />
@@ -143,19 +156,19 @@ export default memo(() => {
             ]}
           />
 
-          {/* 拖动指示器 */}
+          {/* 滑块 - 动态显示 */}
           <Animated.View
             style={[
               styles.progressThumb,
               {
                 left: `${currentProgress * 100}%`,
-                backgroundColor: theme['c-primary'],
-                transform: [{ scale: scaleAnim }],
-                shadowColor: theme['c-primary'],
+                backgroundColor: '#FFFFFF',
+                opacity: thumbOpacityAnim,
+                shadowColor: '#000',
               },
             ]}
           />
-        </View>
+        </Animated.View>
       </View>
     </View>
   )

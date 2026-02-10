@@ -1,11 +1,12 @@
 /**
- * ModernControlBtn - 现代化控制按钮组件
+ * ModernControlBtn - Apple Music 风格控制按钮
  *
  * 新特性：
- * - 更大的按钮（60px）
- * - 播放按钮突出显示（80px）
- * - 更好的按压反馈
- * - 优化的布局
+ * - 更大的按钮（播放按钮 85px）
+ * - 渐变播放按钮
+ * - 流畅的按压动画
+ * - 主题色光晕效果
+ * - 优化的视觉层级
  */
 
 import { memo, useRef } from 'react'
@@ -133,11 +134,11 @@ export default memo(() => {
         onPress={playPrev}
       />
 
-      {/* 播放/暂停 */}
+      {/* 播放/暂停 - 更大更突出 */}
       <ControlButton
         icon={isPlay ? 'pause' : 'play'}
-        size={80}
-        iconSize={40}
+        size={85}
+        iconSize={42}
         onPress={togglePlay}
         primary
       />
@@ -161,16 +162,16 @@ const styles = createStyle({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 20,
+    paddingVertical: 24,
     paddingHorizontal: 10,
   },
   button: {
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
   },
 })

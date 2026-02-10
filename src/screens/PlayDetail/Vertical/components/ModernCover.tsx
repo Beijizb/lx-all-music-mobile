@@ -177,16 +177,6 @@ export default memo(({ componentId }: { componentId: string }) => {
 
   return (
     <View style={styles.container}>
-      {/* 背景渐变效果 */}
-      <View
-        style={[
-          styles.backgroundGradient,
-          {
-            backgroundColor: theme['c-primary-light-400-alpha-700'],
-          },
-        ]}
-      />
-
       {/* 封面 */}
       <Animated.View
         style={[
@@ -225,14 +215,6 @@ const styles = createStyle({
     alignItems: 'center',
     paddingBottom: '3%',
     position: 'relative',
-  },
-  backgroundGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    opacity: 0.3,
   },
   content: {
     backgroundColor: 'rgba(0,0,0,0)',

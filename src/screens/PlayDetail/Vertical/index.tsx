@@ -9,9 +9,11 @@ import ModernPlayer from './components/ModernPlayer'
 import PagerView, { type PagerViewOnPageSelectedEvent } from 'react-native-pager-view'
 import ModernCover from './components/ModernCover'
 import Lyric from './Lyric'
+import MeshGradientBackground from '@/components/MeshGradientBackground'
 import { screenkeepAwake, screenUnkeepAwake } from '@/utils/nativeModules/utils'
 import commonState, { type InitState as CommonState } from '@/store/common/state'
 import { createStyle } from '@/utils/tools'
+import { useTheme } from '@/store/theme/hook'
 // import { useTheme } from '@/store/theme/hook'
 
 const LyricPage = ({ activeIndex }: { activeIndex: number }) => {
@@ -30,10 +32,22 @@ const LyricPage = ({ activeIndex }: { activeIndex: number }) => {
 
 // global.iskeep = false
 export default memo(({ componentId }: { componentId: string }) => {
-  // const theme = useTheme()
+  const theme = useTheme()
   const [pageIndex, setPageIndex] = useState(0)
   const pagerViewRef = useRef<PagerView>(null);
   const showLyricRef = useRef(false)
+
+  // 动态背景颜色（基于主题色）
+  const backgroundColors = useMemo(() => {
+    const primary = theme['c-primary']
+    return [
+      primary,
+      theme['c-primary-dark-100'],
+      theme['c-primary-dark-200'],
+      theme['c-primary-light-100'],
+      theme['c-primary-light-200'],
+    ]
+  }, [theme])
 
   const onPageSelected = ({ nativeEvent }: PagerViewOnPageSelectedEvent) => {
     setPageIndex(nativeEvent.position)
@@ -77,6 +91,9 @@ export default memo(({ componentId }: { componentId: string }) => {
 
   return (
     <>
+      {/* 动态渐变背景 */}
+      <MeshGradientBackground colors={backgroundColors} animated={true} />
+
       <Header />
       <View style={styles.container}>
         <PagerView
