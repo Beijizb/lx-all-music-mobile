@@ -1,3 +1,5 @@
+import { getDefaultNavStatus } from './homeNav'
+
 const defaultSetting: LX.AppSetting = {
   version: '2.0',
   'version.autoCheckUpdate': true,
@@ -18,15 +20,7 @@ const defaultSetting: LX.AppSetting = {
   'common.yt_cookie': '',
   'common.alwaysKeepStatusbarHeight': false,
 
-  'common.navStatus': {
-    nav_songlist: true,
-    nav_top: true,
-    nav_love: true,
-    nav_daily_rec: true,
-    nav_my_playlist: true,
-    nav_followed_artists: true,
-    nav_subscribed_albums: true,
-  },
+  'common.navStatus': getDefaultNavStatus(),
 
   'player.startupAutoPlay': false,
   'player.startupPushPlayDetailScreen': false,

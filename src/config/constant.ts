@@ -1,3 +1,5 @@
+import { DEFAULT_HOME_NAV_ID, NAV_MENUS, type NAV_ID_Type } from './homeNav'
+
 export const HEADER_HEIGHT = 42
 export const LIST_ITEM_HEIGHT = 70
 export const LIST_SCROLL_POSITION_KEY = '__LIST_SCROLL_POSITION_KEY__'
@@ -106,20 +108,8 @@ export const storageDataPrefixOld = {
 
 export const APP_PROVIDER_NAME = 'com.lxnetease.music.mobile.provider'
 
-export const NAV_MENUS = [
-  { id: 'nav_search', icon: 'search-2' },
-  { id: 'nav_songlist', icon: 'album' },
-  { id: 'nav_top', icon: 'leaderboard' },
-  { id: 'nav_love', icon: 'love' },
-  { id: 'nav_daily_rec', icon: 'love' },
-  { id: 'nav_followed_artists', icon: 'love' },
-  { id: 'nav_subscribed_albums', icon: 'album' },
-  { id: 'nav_my_playlist', icon: 'album'},
-  // { id: 'download', icon: 'download-2' },
-  { id: 'nav_setting', icon: 'setting' },
-] as const
-
-export type NAV_ID_Type = (typeof NAV_MENUS)[number]['id']
+export { DEFAULT_HOME_NAV_ID, NAV_MENUS }
+export type { NAV_ID_Type }
 
 export const LXM_FILE_EXT_RXP = ['json', 'lxmc', 'bin']
 export const USER_API_SOURCE_FILE_EXT_RXP = ['js']
@@ -160,7 +150,7 @@ export const DEFAULT_SETTING = {
   },
 
   viewPrevState: {
-    id: 'nav_search' as NAV_ID_Type,
+    id: DEFAULT_HOME_NAV_ID as NAV_ID_Type,
     // query: {},
   },
 }

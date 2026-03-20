@@ -8,11 +8,12 @@ import { useSettingValue } from '@/store/setting/hook';
 import { useI18n } from '@/lang';
 import { updateSetting } from '@/core/common';
 import { NAV_MENUS, NAV_ID_Type } from '@/config/constant';
+import { isAlwaysVisibleNavId } from '@/config/homeNav'
 
 const Item = ({ id, name }: { id: NAV_ID_Type; name: string }) => {
   const navStatus = useSettingValue('common.navStatus');
   const isChecked = useMemo(() => navStatus[id] ?? true, [navStatus, id]);
-  const isDisabled = useMemo(() => id === 'nav_search' || id === 'nav_setting', [id]);
+  const isDisabled = useMemo(() => isAlwaysVisibleNavId(id), [id]);
 
   const handleChange = (check: boolean) => {
     updateSetting({ 'common.navStatus': { ...navStatus, [id]: check } });

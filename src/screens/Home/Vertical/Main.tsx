@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentRef } from 'react'
 import {Keyboard, View} from 'react-native'
 import Search from '../Views/Search'
+import ModernHome from '../Views/ModernHome'
 import SongList from '../Views/SongList'
 import Mylist from '../Views/Mylist'
 import Leaderboard from '../Views/Leaderboard'
@@ -19,6 +20,43 @@ import FollowedArtists from '../Views/FollowedArtists'
 import SubscribedAlbums from '../Views/SubscribedAlbums';
 import {NAV_MENUS} from "@/config/constant";
 import {useSettingValue} from "@/store/setting/hook";
+import { isAlwaysVisibleNavId } from '@/config/homeNav'
+
+const HomePage = () => {
+  const [visible, setVisible] = useState(commonState.navActiveId == 'nav_home')
+  const component = useMemo(() => <ModernHome />, [])
+  useEffect(() => {
+    let currentId: CommonState['navActiveId'] = commonState.navActiveId
+    const handleNavIdUpdate = (id: CommonState['navActiveId']) => {
+      currentId = id
+      if (id == 'nav_home') {
+        requestAnimationFrame(() => {
+          setVisible(true)
+        })
+      }
+    }
+    const handleHide = () => {
+      if (currentId != 'nav_setting') return
+      setVisible(false)
+    }
+    const handleConfigUpdated = (keys: Array<keyof LX.AppSetting>) => {
+      if (keys.some((k) => hideKeys.includes(k))) handleHide()
+    }
+    global.state_event.on('navActiveIdUpdated', handleNavIdUpdate)
+    global.state_event.on('themeUpdated', handleHide)
+    global.state_event.on('languageChanged', handleHide)
+    global.state_event.on('configUpdated', handleConfigUpdated)
+
+    return () => {
+      global.state_event.off('navActiveIdUpdated', handleNavIdUpdate)
+      global.state_event.off('themeUpdated', handleHide)
+      global.state_event.off('languageChanged', handleHide)
+      global.state_event.off('configUpdated', handleConfigUpdated)
+    }
+  }, [])
+
+  return visible ? component : null
+}
 
 const hideKeys = ['list.isShowAlbumName', 'list.isShowInterval', 'theme.fontShadow'] as Readonly<
   Array<keyof LX.AppSetting>
@@ -337,7 +375,7 @@ const Main = () => {
   // 根据 navStatus 动态生成可见的菜单项、viewMap 和 indexMap
   const visibleNavs = useMemo(() => {
     return NAV_MENUS.filter(
-      menu => menu.id === 'nav_search' || menu.id === 'nav_setting' || (navStatus[menu.id] ?? true)
+      menu => isAlwaysVisibleNavId(menu.id) || (navStatus[menu.id] ?? true)
     );
   }, [navStatus]);
 
@@ -395,6 +433,7 @@ const Main = () => {
   // 根据 visibleNavs 动态渲染 PagerView 的子组件
   const pages = useMemo(() => {
     const pageComponents = {
+      nav_home: <HomePage />,
       nav_search: <SearchPage />,
       nav_songlist: <SongListPage />,
       nav_top: <LeaderboardPage />,

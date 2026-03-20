@@ -18,6 +18,7 @@ import { useMyList } from '@/store/list/hook';
 import { setActiveList } from '@/core/list';
 import {navigations} from "@/navigation";
 import commonState from '@/store/common/state';
+import { isAlwaysVisibleNavId } from '@/config/homeNav'
 
 const CollapsibleMyListItem = () => {
   const t = useI18n();
@@ -253,7 +254,7 @@ export default memo(() => {
   };
   const filteredNavMenus = useMemo(() => {
     return NAV_MENUS.filter(
-      menu => menu.id === 'nav_search' || menu.id === 'nav_setting' || (navStatus[menu.id] ?? true)
+      menu => isAlwaysVisibleNavId(menu.id) || (navStatus[menu.id] ?? true)
     );
   }, [navStatus]);
 

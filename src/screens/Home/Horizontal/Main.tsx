@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import ModernHome from '../Views/ModernHome'
 import Search from '../Views/Search'
 import SongList from '../Views/SongList'
 import Mylist from '../Views/Mylist'
@@ -27,6 +28,8 @@ const Main = () => {
 
   const component = useMemo(() => {
     switch (id) {
+      case 'nav_home':
+        return <ModernHome />
       case 'nav_daily_rec':
         return <DailyRec />
       case 'nav_my_playlist':

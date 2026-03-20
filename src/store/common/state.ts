@@ -1,4 +1,4 @@
-import { type NAV_ID_Type, type COMPONENT_IDS } from '@/config/constant'
+import { DEFAULT_HOME_NAV_ID, type NAV_ID_Type, type COMPONENT_IDS } from '@/config/constant'
 
 export interface InitState {
   fontSize: number
@@ -16,8 +16,8 @@ const state: InitState = {
   fontSize: global.lx.fontSize,
   statusbarHeight: 0,
   componentIds: [],
-  navActiveId: 'nav_search',
-  lastNavActiveId: 'nav_search',
+  navActiveId: DEFAULT_HOME_NAV_ID,
+  lastNavActiveId: DEFAULT_HOME_NAV_ID,
   sourceNames: initData as InitState['sourceNames'],
   bgPic: null,
 }

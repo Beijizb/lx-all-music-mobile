@@ -8,6 +8,7 @@ import {
   getDataMultiple,
 } from '@/plugins/storage'
 import { DEFAULT_SETTING, LIST_IDS, storageDataPrefix, type NAV_ID_Type } from '@/config/constant'
+import { normalizeStartupNavId } from '@/config/homeNav'
 import { throttle } from './common'
 // import { gzip, ungzip } from '@/utils/nativeModules/gzip'
 // import { readFile, writeFile, temporaryDirectoryPath, unlink } from '@/utils/fs'
@@ -275,9 +276,11 @@ export const saveLeaderboardSetting = async (
 }
 
 export const getViewPrevState = async () => {
-  return (
+  const state =
     (await getData<{ id: NAV_ID_Type }>(viewPrevStateKey)) ?? { ...DEFAULT_SETTING.viewPrevState }
-  )
+  return {
+    id: normalizeStartupNavId(state.id),
+  }
 }
 export const saveViewPrevState = (state: { id: NAV_ID_Type }) => {
   saveViewPrevStateThrottle(state)

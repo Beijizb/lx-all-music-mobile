@@ -10,6 +10,7 @@ import type { InitState } from '@/store/common/state'
 import { exitApp, setNavActiveId } from '@/core/common'
 import { BorderWidths } from '@/theme'
 import { useSettingValue } from '@/store/setting/hook'
+import { isAlwaysVisibleNavId } from '@/config/homeNav'
 
 const NAV_WIDTH = 68
 
@@ -142,7 +143,7 @@ export default memo(() => {
 
   const filteredNavMenus = useMemo(() => {
     return NAV_MENUS.filter(
-      menu => menu.id === 'nav_search' || menu.id === 'nav_setting' || (navStatus[menu.id] ?? true)
+      menu => isAlwaysVisibleNavId(menu.id) || (navStatus[menu.id] ?? true)
     );
   }, [navStatus]);
   return (

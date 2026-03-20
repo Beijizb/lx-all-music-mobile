@@ -14,6 +14,7 @@ import { COMPONENT_IDS, NAV_MENUS } from '@/config/constant'
 import { useSettingValue } from '@/store/setting/hook'
 import { useNavActiveId } from '@/store/common/hook'
 import { setNavActiveId } from '@/core/common'
+import { isAlwaysVisibleNavId } from '@/config/homeNav'
 
 const Tabs = ({ activeTab, onTabChange }: { activeTab: 'songs' | 'playlists', onTabChange: (tab: 'songs' | 'playlists') => void }) => {
   const theme = useTheme()
@@ -50,7 +51,7 @@ export default memo(() => {
   const navStatus = useSettingValue('common.navStatus')
   const visibleNavs = useMemo(() => {
     return NAV_MENUS.filter(
-      menu => menu.id === 'nav_search' || menu.id === 'nav_setting' || (navStatus[menu.id] ?? true)
+      menu => isAlwaysVisibleNavId(menu.id) || (navStatus[menu.id] ?? true)
     )
   }, [navStatus])
   const activeNavId = useNavActiveId()

@@ -86,7 +86,7 @@ async def broadcast_to_clients(message):
         await asyncio.gather(*[client.send(message) for client in connected_clients])
 
 
-async def websocket_handler(websocket, path):
+async def websocket_handler(websocket, path=None):
     connected_clients.add(websocket)
     print("\n\033[94m--- 调试界面已连接。--- \033[0m")
     try:
@@ -115,11 +115,13 @@ if __name__ == "__main__":
         
         loop.call_later(1, webbrowser.open_new_tab, f'http://localhost:{WEB_SERVER_PORT}/debugger.html')
 
-        start_server = websockets.serve(websocket_handler, "localhost", DEBUG_WEBSOCKET_PORT)
+        async def run_websocket_server():
+            print(f"--- WebSocket 璋冭瘯鏈嶅姟鍣ㄦ鍦ㄧ洃鍚鍙?{DEBUG_WEBSOCKET_PORT} ---")
+            async with websockets.serve(websocket_handler, "localhost", DEBUG_WEBSOCKET_PORT):
+                await asyncio.Future()
         
         print(f"--- WebSocket 调试服务器正在监听端口 {DEBUG_WEBSOCKET_PORT} ---")
-        loop.run_until_complete(start_server)
-        loop.run_forever()
+        loop.run_until_complete(run_websocket_server())
 
     except KeyboardInterrupt:
         print("\n--- 正在关闭... ---")
