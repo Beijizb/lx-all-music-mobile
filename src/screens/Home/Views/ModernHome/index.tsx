@@ -4,7 +4,8 @@ import { useTheme } from '@/store/theme/hook'
 import { useMyList } from '@/store/list/hook'
 import { usePlayMusicInfo } from '@/store/player/hook'
 import Text from '@/components/common/Text'
-import Image from '@/components/common/Image'
+import Image, { defaultHeaders } from '@/components/common/Image'
+import ImageBackground from '@/components/common/ImageBackground'
 import { Icon } from '@/components/common/Icon'
 import { createStyle } from '@/utils/tools'
 import { setNavActiveId } from '@/core/common'
@@ -34,6 +35,28 @@ const getGreeting = () => {
   if (hour < 14) return '中午好'
   if (hour < 18) return '下午好'
   return '晚上好'
+}
+
+const DynamicSandBackdrop = ({ coverUri }: { coverUri?: string }) => {
+  return (
+    <View style={styles.backdrop}>
+      <View style={styles.backdropBase} />
+      {coverUri ? (
+        <ImageBackground
+          source={{ uri: coverUri, headers: defaultHeaders }}
+          blurRadius={42}
+          resizeMode="cover"
+          style={styles.backdropImage}
+        >
+          <View style={styles.backdropImageWash} />
+        </ImageBackground>
+      ) : null}
+      <View style={[styles.colorWash, styles.colorWashSky]} />
+      <View style={[styles.colorWash, styles.colorWashSand]} />
+      <View style={[styles.colorWash, styles.colorWashRose]} />
+      <View style={styles.backdropVeil} />
+    </View>
+  )
 }
 
 export default function ModernHome() {
@@ -137,12 +160,19 @@ export default function ModernHome() {
     { key: 'mylist', icon: 'album', title: '本地音乐', color: '#E77DA6' },
   ]
 
+  const glassCardStyle = {
+    backgroundColor: 'rgba(255, 255, 255, 0.56)',
+    borderColor: 'rgba(255, 255, 255, 0.72)',
+  }
+
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: theme['c-app-background'] }]}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
+    <View style={styles.container}>
+      <DynamicSandBackdrop coverUri={heroCover} />
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
       <View style={styles.topBar}>
         <TouchableOpacity
           activeOpacity={0.75}
@@ -171,13 +201,13 @@ export default function ModernHome() {
 
       <TouchableOpacity
         activeOpacity={0.9}
-        style={[styles.heroCard, { backgroundColor: theme['c-primary-light-400-alpha-700'] }]}
+        style={[styles.heroCard, glassCardStyle]}
         onPress={() => (currentMusic ? handleQuickAction('mylist') : heroList ? openList(heroList.id) : handleQuickAction('daily'))}
       >
         {heroCover ? (
           <Image url={heroCover} style={styles.heroImage} />
         ) : (
-          <View style={[styles.heroImageFallback, { backgroundColor: theme['c-primary-light-200-alpha-700'] }]}>
+          <View style={styles.heroImageFallback}>
             <Icon name="music" size={96} color={theme['c-primary']} />
           </View>
         )}
@@ -209,7 +239,7 @@ export default function ModernHome() {
             activeOpacity={0.82}
             style={[
               styles.actionCard,
-              { backgroundColor: theme['c-primary-light-400-alpha-700'] },
+              glassCardStyle,
             ]}
             onPress={() => handleQuickAction(item.key)}
           >
@@ -244,14 +274,14 @@ export default function ModernHome() {
               <TouchableOpacity
                 key={music.id}
                 activeOpacity={0.86}
-                style={[styles.recommendCard, { backgroundColor: theme['c-primary-light-400-alpha-700'] }]}
+                style={[styles.recommendCard, glassCardStyle]}
                 onPress={() => handleQuickAction('mylist')}
               >
                 <View style={styles.recommendCoverWrap}>
                   {music.meta?.picUrl ? (
                     <Image url={music.meta.picUrl} style={styles.recommendCover} />
                   ) : (
-                    <View style={[styles.recommendCoverFallback, { backgroundColor: theme['c-primary-light-200-alpha-700'] }]}>
+                    <View style={styles.recommendCoverFallback}>
                       <Icon name="music" size={42} color={theme['c-primary']} />
                     </View>
                   )}
@@ -288,13 +318,13 @@ export default function ModernHome() {
             <TouchableOpacity
               key={list.id}
               activeOpacity={0.86}
-              style={[styles.listCard, { backgroundColor: theme['c-primary-light-400-alpha-700'] }]}
+              style={[styles.listCard, glassCardStyle]}
               onPress={() => openList(list.id)}
             >
               {list.coverUri ? (
                 <Image url={list.coverUri} style={styles.listCover} />
               ) : (
-                <View style={[styles.listCoverFallback, { backgroundColor: theme['c-primary-light-200-alpha-700'] }]}>
+                <View style={styles.listCoverFallback}>
                   <Icon name="album" size={32} color={theme['c-primary']} />
                 </View>
               )}
@@ -312,13 +342,76 @@ export default function ModernHome() {
       </View>
 
       <View style={styles.bottomSpacer} />
-    </ScrollView>
+      </ScrollView>
+    </View>
   )
 }
 
 const styles = createStyle({
   container: {
     flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    overflow: 'hidden',
+  },
+  backdropBase: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#F7F4ED',
+  },
+  backdropImage: {
+    position: 'absolute',
+    top: -40,
+    left: -40,
+    right: -40,
+    height: 420,
+    opacity: 0.34,
+  },
+  backdropImageWash: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.42)',
+  },
+  colorWash: {
+    position: 'absolute',
+    left: -40,
+    right: -40,
+    height: 210,
+    opacity: 0.46,
+  },
+  colorWashSky: {
+    top: 70,
+    backgroundColor: 'rgba(178, 221, 238, 0.62)',
+    transform: [{ rotate: '-8deg' }],
+  },
+  colorWashSand: {
+    top: 250,
+    backgroundColor: 'rgba(240, 221, 177, 0.58)',
+    transform: [{ rotate: '7deg' }],
+  },
+  colorWashRose: {
+    top: 430,
+    backgroundColor: 'rgba(230, 188, 205, 0.42)',
+    transform: [{ rotate: '-5deg' }],
+  },
+  backdropVeil: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.62)',
   },
   content: {
     paddingHorizontal: 20,
@@ -351,9 +444,10 @@ const styles = createStyle({
     borderRadius: 24,
     overflow: 'hidden',
     marginBottom: 20,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.08,
     shadowRadius: 18,
     elevation: 5,
   },
@@ -369,6 +463,7 @@ const styles = createStyle({
     alignItems: 'flex-end',
     justifyContent: 'center',
     paddingRight: 34,
+    backgroundColor: 'rgba(255, 255, 255, 0.36)',
   },
   heroScrim: {
     position: 'absolute',
@@ -376,7 +471,7 @@ const styles = createStyle({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.58)',
+    backgroundColor: 'rgba(255, 255, 255, 0.48)',
   },
   heroContent: {
     flex: 1,
@@ -410,12 +505,13 @@ const styles = createStyle({
     width: 104,
     height: 104,
     borderRadius: 18,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.05,
     shadowRadius: 12,
     elevation: 3,
   },
@@ -452,11 +548,12 @@ const styles = createStyle({
   recommendCard: {
     width: 152,
     borderRadius: 18,
+    borderWidth: 1,
     marginRight: 16,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.06,
     shadowRadius: 14,
     elevation: 3,
   },
@@ -474,6 +571,7 @@ const styles = createStyle({
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.38)',
   },
   recommendPlayBtn: {
     position: 'absolute',
@@ -504,6 +602,7 @@ const styles = createStyle({
     width: '48.5%',
     minHeight: 70,
     borderRadius: 16,
+    borderWidth: 1,
     padding: 10,
     marginBottom: 12,
     flexDirection: 'row',
@@ -520,6 +619,7 @@ const styles = createStyle({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.38)',
   },
   listInfo: {
     flex: 1,
