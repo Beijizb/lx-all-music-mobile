@@ -16,7 +16,7 @@ import { useTheme } from '@/store/theme/hook'
 import themeState from '@/store/theme/state'
 import { ThemeFrameworkType } from '@/theme/ThemeFramework'
 import Text from '@/components/common/Text'
-import Icon from '@/components/common/Icon'
+import { Icon } from '@/components/common/Icon'
 import { createStyle } from '@/utils/tools'
 
 export interface QuickActionCardProps {

@@ -14,7 +14,7 @@ import { View, TextInput, Pressable, Animated } from 'react-native'
 import { useTheme } from '@/store/theme/hook'
 import themeState from '@/store/theme/state'
 import { ThemeFrameworkType } from '@/theme/ThemeFramework'
-import Icon from '@/components/common/Icon'
+import { Icon } from '@/components/common/Icon'
 import { createStyle } from '@/utils/tools'
 
 export interface ModernSearchBarProps {

@@ -18,7 +18,7 @@ import themeState from '@/store/theme/state'
 import { ThemeFrameworkType } from '@/theme/ThemeFramework'
 import Text from '@/components/common/Text'
 import Image from '@/components/common/Image'
-import Icon from '@/components/common/Icon'
+import { Icon } from '@/components/common/Icon'
 import { ModernButton } from '@/components/modern'
 import { createStyle } from '@/utils/tools'
 
