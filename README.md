@@ -16,6 +16,17 @@
 
 ---
 
+### 2.0.0.9
+
+#### 新增
+- 完善 Bilibili 音乐来源说明，支持视频搜索、分 P 展开与收藏夹歌单
+- 更新版本号与 Android versionCode，便于 GitHub Actions 生成新版安装包
+
+#### 修复、优化
+- 同步 package 与 lockfile 版本信息
+- 补充 Bilibili Cookie/扫码登录相关发布说明
+---
+
 ### 2.0.0
 
 #### 新增
