@@ -6,11 +6,6 @@ import { usePlayMusicInfo } from '@/store/player/hook'
 import Text from '@/components/common/Text'
 import Image from '@/components/common/Image'
 import { Icon } from '@/components/common/Icon'
-import {
-  QuickActionCard,
-  PlaylistCard,
-  ModernSearchBar,
-} from '@/components/modern'
 import { createStyle } from '@/utils/tools'
 import { setNavActiveId } from '@/core/common'
 import { getListMusics, setActiveList } from '@/core/list'
@@ -32,11 +27,19 @@ const getPlayableMusicInfo = (musicInfo: LX.Player.PlayMusic | null) => {
   return 'progress' in musicInfo ? musicInfo.metadata.musicInfo : musicInfo
 }
 
+const getGreeting = () => {
+  const hour = new Date().getHours()
+  if (hour < 6) return '夜深了'
+  if (hour < 11) return 'Good Morning'
+  if (hour < 14) return '中午好'
+  if (hour < 18) return '下午好'
+  return '晚上好'
+}
+
 export default function ModernHome() {
   const theme = useTheme()
   const allLists = useMyList()
   const playMusicInfo = usePlayMusicInfo()
-  const [searchText, setSearchText] = useState('')
   const [listSummaries, setListSummaries] = useState<HomeListSummary[]>([])
 
   const currentMusic = getPlayableMusicInfo(playMusicInfo.musicInfo)
@@ -121,6 +124,18 @@ export default function ModernHome() {
         coverUri: undefined,
         tracks: [],
       }))
+  const heroList = visibleLists.find((list) => list.coverUri) ?? visibleLists[0]
+  const heroCover = currentCover || heroList?.coverUri || recentTracks[0]?.meta?.picUrl
+  const heroTitle = currentMusic?.name || heroList?.name || '春日微风'
+  const heroSubtitle = currentMusic?.singer || (heroList?.count ? `${heroList.count} 首歌曲` : '用音乐开启美好的一天')
+
+  const actionItems = [
+    { key: 'daily', icon: 'music', title: '每日推荐', color: '#8DC56F' },
+    { key: 'leaderboard', icon: 'leaderboard', title: '排行榜', color: '#5DA9E9' },
+    { key: 'mylist', icon: 'love', title: '收藏歌单', color: '#9B6FE8' },
+    { key: 'search', icon: 'search-2', title: '全源搜索', color: '#F0A94A' },
+    { key: 'mylist', icon: 'album', title: '本地音乐', color: '#E77DA6' },
+  ]
 
   return (
     <ScrollView
@@ -128,101 +143,96 @@ export default function ModernHome() {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.searchSection}>
-        <ModernSearchBar
-          placeholder="搜索歌曲、歌手、歌单"
-          value={searchText}
-          onChangeText={setSearchText}
-          onSubmit={handleSearch}
-          onFocus={handleSearch}
-        />
+      <View style={styles.topBar}>
+        <TouchableOpacity
+          activeOpacity={0.75}
+          style={styles.topIconBtn}
+          onPress={() => handleQuickAction('mylist')}
+        >
+          <Icon name="menu" size={22} color={theme['c-font']} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          activeOpacity={0.75}
+          style={styles.topIconBtn}
+          onPress={handleSearch}
+        >
+          <Icon name="search-2" size={24} color={theme['c-font']} />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.greetingBlock}>
+        <Text size={30} color={theme['c-font']} style={styles.greetingTitle}>
+          {getGreeting()}
+        </Text>
+        <Text size={15} color={theme['c-font-label']} style={styles.greetingSubtitle}>
+          用音乐开启美好的一天
+        </Text>
       </View>
 
       <TouchableOpacity
-        activeOpacity={0.86}
-        style={[
-          styles.nowPlaying,
-          {
-            backgroundColor: theme['c-primary-light-400-alpha-700'],
-            borderColor: theme['c-primary-light-600-alpha-700'],
-          },
-        ]}
-        onPress={() => handleQuickAction('mylist')}
+        activeOpacity={0.9}
+        style={[styles.heroCard, { backgroundColor: theme['c-primary-light-400-alpha-700'] }]}
+        onPress={() => (currentMusic ? handleQuickAction('mylist') : heroList ? openList(heroList.id) : handleQuickAction('daily'))}
       >
-        <View
-          style={[
-            styles.nowPlayingCover,
-            { backgroundColor: theme['c-primary-light-200-alpha-700'] },
-          ]}
-        >
-          {currentCover ? (
-            <Image url={currentCover} style={styles.nowPlayingImage} />
-          ) : (
-            <Icon name="music" size={38} color={theme['c-primary']} />
-          )}
+        {heroCover ? (
+          <Image url={heroCover} style={styles.heroImage} />
+        ) : (
+          <View style={[styles.heroImageFallback, { backgroundColor: theme['c-primary-light-200-alpha-700'] }]}>
+            <Icon name="music" size={96} color={theme['c-primary']} />
+          </View>
+        )}
+        <View style={styles.heroScrim} />
+        <View style={styles.heroContent}>
+          <Text size={13} color={theme['c-primary']} style={styles.heroEyebrow}>
+            今日推荐
+          </Text>
+          <Text size={28} color="#202124" numberOfLines={1} style={styles.heroTitle}>
+            {heroTitle}
+          </Text>
+          <Text size={16} color="#5F6670" numberOfLines={1} style={styles.heroSubtitle}>
+            {heroSubtitle}
+          </Text>
+          <View style={[styles.heroPlayBtn, { backgroundColor: theme['c-primary'] }]}>
+            <Icon name="play" size={28} color="#FFFFFF" />
+          </View>
         </View>
-        <View style={styles.nowPlayingInfo}>
-          <Text size={13} color={theme['c-font-label']} numberOfLines={1}>
-            {currentMusic ? '正在播放' : '准备播放'}
-          </Text>
-          <Text size={21} color={theme['c-font']} numberOfLines={1} style={styles.heroTitle}>
-            {currentMusic?.name || '打开你的音乐库'}
-          </Text>
-          <Text size={14} color={theme['c-font-label']} numberOfLines={1}>
-            {currentMusic?.singer || `${visibleLists.length} 个歌单可用`}
-          </Text>
-        </View>
-        <Icon name="chevron-right" size={20} color={theme['c-font-label']} />
       </TouchableOpacity>
 
-      <View style={styles.section}>
-        <View style={styles.quickActionsGrid}>
-          <View style={styles.quickActionItem}>
-            <QuickActionCard
-              icon="search-2"
-              title="搜索"
-              subtitle="全源查找"
-              onPress={() => handleQuickAction('search')}
-            />
-          </View>
-          <View style={styles.quickActionItem}>
-            <QuickActionCard
-              icon="love"
-              title="每日推荐"
-              subtitle="今日歌单"
-              onPress={() => handleQuickAction('daily')}
-            />
-          </View>
-          <View style={styles.quickActionItem}>
-            <QuickActionCard
-              icon="album"
-              title="我的音乐"
-              subtitle="收藏列表"
-              onPress={() => handleQuickAction('mylist')}
-            />
-          </View>
-          <View style={styles.quickActionItem}>
-            <QuickActionCard
-              icon="trophy"
-              title="排行榜"
-              subtitle="热门趋势"
-              onPress={() => handleQuickAction('leaderboard')}
-            />
-          </View>
-        </View>
-      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.actionList}
+      >
+        {actionItems.map((item, index) => (
+          <TouchableOpacity
+            key={`${item.key}_${index}`}
+            activeOpacity={0.82}
+            style={[
+              styles.actionCard,
+              { backgroundColor: theme['c-primary-light-400-alpha-700'] },
+            ]}
+            onPress={() => handleQuickAction(item.key)}
+          >
+            <View style={[styles.actionIconWrap, { backgroundColor: `${item.color}20` }]}>
+              <Icon name={item.icon} size={28} color={item.color} />
+            </View>
+            <Text size={13} color={theme['c-font']} numberOfLines={1} style={styles.actionText}>
+              {item.title}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
 
       {recentTracks.length ? (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text size={18} color={theme['c-font']} style={styles.sectionTitle}>
-              最近的音乐
-            </Text>
-            <TouchableOpacity onPress={() => handleQuickAction('mylist')}>
-              <Text size={13} color={theme['c-primary']}>
-                查看全部
+            <TouchableOpacity activeOpacity={0.75} onPress={() => handleQuickAction('mylist')} style={styles.sectionTitleRow}>
+              <Text size={20} color={theme['c-font']} style={styles.sectionTitle}>
+                为你推荐
               </Text>
+              <Icon name="chevron-right" size={16} color={theme['c-font-label']} />
             </TouchableOpacity>
+            <Text size={13} color={theme['c-font-label']}>换一换</Text>
           </View>
 
           <ScrollView
@@ -231,14 +241,33 @@ export default function ModernHome() {
             contentContainerStyle={styles.horizontalList}
           >
             {recentTracks.map((music) => (
-              <View key={music.id} style={styles.recentItem}>
-                <PlaylistCard
-                  coverUri={music.meta?.picUrl}
-                  title={music.name}
-                  subtitle={music.singer}
-                  onPress={() => handleQuickAction('mylist')}
-                />
-              </View>
+              <TouchableOpacity
+                key={music.id}
+                activeOpacity={0.86}
+                style={[styles.recommendCard, { backgroundColor: theme['c-primary-light-400-alpha-700'] }]}
+                onPress={() => handleQuickAction('mylist')}
+              >
+                <View style={styles.recommendCoverWrap}>
+                  {music.meta?.picUrl ? (
+                    <Image url={music.meta.picUrl} style={styles.recommendCover} />
+                  ) : (
+                    <View style={[styles.recommendCoverFallback, { backgroundColor: theme['c-primary-light-200-alpha-700'] }]}>
+                      <Icon name="music" size={42} color={theme['c-primary']} />
+                    </View>
+                  )}
+                  <View style={styles.recommendPlayBtn}>
+                    <Icon name="play" size={20} color="#394049" />
+                  </View>
+                </View>
+                <View style={styles.recommendInfo}>
+                  <Text size={14} color={theme['c-font']} numberOfLines={1} style={styles.recommendTitle}>
+                    {music.name}
+                  </Text>
+                  <Text size={12} color={theme['c-font-label']} numberOfLines={1}>
+                    {music.singer || '轻音乐精选'}
+                  </Text>
+                </View>
+              </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
@@ -246,9 +275,7 @@ export default function ModernHome() {
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text size={18} color={theme['c-font']} style={styles.sectionTitle}>
-            我的歌单
-          </Text>
+          <Text size={20} color={theme['c-font']} style={styles.sectionTitle}>我的歌单</Text>
           <TouchableOpacity onPress={() => handleQuickAction('mylist')}>
             <Text size={13} color={theme['c-primary']}>
               管理
@@ -258,15 +285,28 @@ export default function ModernHome() {
 
         <View style={styles.playlistGrid}>
           {visibleLists.map((list) => (
-            <View key={list.id} style={styles.playlistItem}>
-              <PlaylistCard
-                coverUri={list.coverUri}
-                title={list.name}
-                subtitle={list.count ? `${list.count} 首歌曲` : '暂无歌曲'}
-                count={list.count}
-                onPress={() => openList(list.id)}
-              />
-            </View>
+            <TouchableOpacity
+              key={list.id}
+              activeOpacity={0.86}
+              style={[styles.listCard, { backgroundColor: theme['c-primary-light-400-alpha-700'] }]}
+              onPress={() => openList(list.id)}
+            >
+              {list.coverUri ? (
+                <Image url={list.coverUri} style={styles.listCover} />
+              ) : (
+                <View style={[styles.listCoverFallback, { backgroundColor: theme['c-primary-light-200-alpha-700'] }]}>
+                  <Icon name="album" size={32} color={theme['c-primary']} />
+                </View>
+              )}
+              <View style={styles.listInfo}>
+                <Text size={14} color={theme['c-font']} numberOfLines={1} style={styles.listTitle}>
+                  {list.name}
+                </Text>
+                <Text size={12} color={theme['c-font-label']} numberOfLines={1}>
+                  {list.count ? `${list.count} 首歌曲` : '暂无歌曲'}
+                </Text>
+              </View>
+            </TouchableOpacity>
           ))}
         </View>
       </View>
@@ -281,80 +321,214 @@ const styles = createStyle({
     flex: 1,
   },
   content: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingHorizontal: 20,
+    paddingTop: 18,
   },
-  searchSection: {
-    marginBottom: 14,
-  },
-  nowPlaying: {
-    minHeight: 116,
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 18,
+  topBar: {
+    height: 42,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 24,
   },
-  nowPlayingCover: {
-    width: 86,
-    height: 86,
-    borderRadius: 8,
+  topIconBtn: {
+    width: 42,
+    height: 42,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
-    marginRight: 14,
   },
-  nowPlayingImage: {
+  greetingBlock: {
+    marginBottom: 22,
+  },
+  greetingTitle: {
+    fontWeight: '800',
+  },
+  greetingSubtitle: {
+    marginTop: 8,
+  },
+  heroCard: {
+    height: 210,
+    borderRadius: 24,
+    overflow: 'hidden',
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    elevation: 5,
+  },
+  heroImage: {
+    position: 'absolute',
     width: '100%',
     height: '100%',
-    borderRadius: 8,
   },
-  nowPlayingInfo: {
+  heroImageFallback: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    paddingRight: 34,
+  },
+  heroScrim: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.58)',
+  },
+  heroContent: {
     flex: 1,
-    minWidth: 0,
+    paddingHorizontal: 26,
+    paddingVertical: 24,
+    justifyContent: 'center',
+  },
+  heroEyebrow: {
+    fontWeight: '700',
+    marginBottom: 14,
   },
   heroTitle: {
-    fontWeight: '700',
-    marginTop: 5,
-    marginBottom: 5,
+    fontWeight: '800',
+  },
+  heroSubtitle: {
+    marginTop: 10,
+  },
+  heroPlayBtn: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 24,
+  },
+  actionList: {
+    paddingRight: 18,
+    marginBottom: 28,
+  },
+  actionCard: {
+    width: 104,
+    height: 104,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  actionIconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  actionText: {
+    fontWeight: '600',
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 28,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   sectionTitle: {
-    fontWeight: '700',
-  },
-  quickActionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  quickActionItem: {
-    width: '48.5%',
-    marginBottom: 10,
+    fontWeight: '800',
   },
   horizontalList: {
-    paddingRight: 16,
+    paddingRight: 18,
   },
-  recentItem: {
-    width: 128,
-    marginRight: 14,
+  recommendCard: {
+    width: 152,
+    borderRadius: 18,
+    marginRight: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 14,
+    elevation: 3,
+  },
+  recommendCoverWrap: {
+    width: '100%',
+    height: 142,
+    position: 'relative',
+  },
+  recommendCover: {
+    width: '100%',
+    height: '100%',
+  },
+  recommendCoverFallback: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recommendPlayBtn: {
+    position: 'absolute',
+    right: 10,
+    bottom: 10,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.88)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recommendInfo: {
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 14,
+  },
+  recommendTitle: {
+    fontWeight: '700',
+    marginBottom: 5,
   },
   playlistGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  playlistItem: {
+  listCard: {
     width: '48.5%',
-    marginBottom: 18,
+    minHeight: 70,
+    borderRadius: 16,
+    padding: 10,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  listCover: {
+    width: 50,
+    height: 50,
+    borderRadius: 12,
+  },
+  listCoverFallback: {
+    width: 50,
+    height: 50,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  listInfo: {
+    flex: 1,
+    minWidth: 0,
+    marginLeft: 10,
+  },
+  listTitle: {
+    fontWeight: '700',
+    marginBottom: 5,
   },
   bottomSpacer: {
     height: 96,
