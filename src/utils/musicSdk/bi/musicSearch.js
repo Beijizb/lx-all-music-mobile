@@ -104,6 +104,35 @@ function durationToSec(duration) {
   return 0
 }
 
+async function fetchVideoPages(bvid, aid) {
+  const params = bvid ? { bvid } : { aid }
+  let signedParams
+  try {
+    signedParams = await signWbi(params)
+  } catch (error) {
+    biLog.warn('获取分P列表 WBI 签名失败，使用原始参数:', error.message || error)
+    signedParams = params
+  }
+
+  const requestObj = httpFetch(`https://api.bilibili.com/x/web-interface/view?${paramsToQuery(signedParams)}`, {
+    method: 'GET',
+    headers: {
+      ...searchHeaders,
+      origin: 'https://www.bilibili.com',
+      referer: bvid ? `https://www.bilibili.com/video/${bvid}` : `https://www.bilibili.com/video/av${aid}`,
+    },
+    timeout: 8000,
+  })
+  const resp = await requestObj.promise
+  let bodyData = resp.body
+  if (typeof bodyData === 'string') bodyData = JSON.parse(bodyData)
+  if (bodyData?.code !== 0) {
+    throw new Error(bodyData?.message || `获取分P列表失败: ${bodyData?.code}`)
+  }
+  const pages = bodyData?.data?.pages
+  return Array.isArray(pages) ? pages : []
+}
+
 // 从 URL 或其他字段中提取 bvid 或 aid
 function extractBvidOrAid(item) {
   // 参考 bb.js 的实现，直接使用 API 返回的字段
@@ -371,6 +400,69 @@ export default {
     return validResults
   },
 
+  async expandMultiPageResults(list) {
+    const expandedList = []
+    for (const item of list) {
+      const bvid = item.meta?.bvid
+      const aid = item.meta?.aid
+
+      if (!bvid && !aid) {
+        expandedList.push(item)
+        continue
+      }
+
+      try {
+        const pages = await fetchVideoPages(bvid, aid)
+        if (pages.length <= 1) {
+          const pageInfo = pages[0]
+          expandedList.push(pageInfo?.cid
+            ? {
+                ...item,
+                interval: secToDuration(pageInfo.duration) || item.interval,
+                meta: {
+                  ...item.meta,
+                  cid: String(pageInfo.cid),
+                  page: pageInfo.page,
+                  part: pageInfo.part,
+                },
+              }
+            : item)
+          continue
+        }
+
+        for (let index = 0; index < pages.length; index++) {
+          const pageInfo = pages[index]
+          const pageNo = pageInfo.page || index + 1
+          const part = pageInfo.part || `P${pageNo}`
+          const pageSongmid = `${item.songmid}_p${pageNo}`
+          expandedList.push({
+            ...item,
+            name: `${item.name} - P${pageNo} ${part}`,
+            interval: secToDuration(pageInfo.duration) || item.interval,
+            songmid: pageSongmid,
+            meta: {
+              ...item.meta,
+              songId: pageSongmid,
+              cid: String(pageInfo.cid),
+              page: pageNo,
+              part,
+            },
+          })
+        }
+      } catch (error) {
+        biLog.warn('展开分P失败，保留原搜索结果:', {
+          name: item.name,
+          bvid,
+          aid,
+          error: error.message || error,
+        })
+        expandedList.push(item)
+      }
+    }
+
+    return expandedList
+  },
+
   search(str, page = 1, limit, retryNum = 0) {
     if (++retryNum > 3) {
       biLog.error('搜索重试次数超限')
@@ -380,12 +472,12 @@ export default {
     if (limit == null) limit = this.limit
     
     return this.musicSearch(str, page, limit)
-      .then((result) => {
+      .then(async (result) => {
         if (!result || !result.result) {
           throw new Error('搜索结果为空')
         }
         
-        const list = this.handleResult(result.result)
+        const list = await this.expandMultiPageResults(this.handleResult(result.result))
         
         if (!list || list.length === 0) {
           biLog.warn(`第${page}页搜索结果为空，关键词: "${str}"`)
@@ -406,7 +498,7 @@ export default {
         this.page = page
         this.allPage = Math.ceil(this.total / this.limit) || 1
         
-        biLog.info(`搜索成功: "${str}" 第${page}页, 共${list.length}条结果`)
+        biLog.info(`搜索成功: "${str}" 第${page}页, 共${list.length}条结果（已展开分P）`)
         
         return {
           list,
@@ -430,4 +522,3 @@ export default {
       })
   },
 }
-

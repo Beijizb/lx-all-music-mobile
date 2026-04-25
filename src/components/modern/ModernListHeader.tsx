@@ -73,7 +73,7 @@ export default function ModernListHeader({
         >
           {coverUri ? (
             <Image
-              source={{ uri: coverUri }}
+              url={coverUri}
               style={[styles.cover, { borderRadius }]}
             />
           ) : (

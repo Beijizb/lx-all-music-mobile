@@ -177,7 +177,7 @@ export default function ModernListItem({
         >
           {coverUri ? (
             <Image
-              source={{ uri: coverUri }}
+              url={coverUri}
               style={[
                 styles.cover,
                 { borderRadius: frameworkStyles.borderRadius },

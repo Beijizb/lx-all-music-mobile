@@ -1,11 +1,11 @@
-<p align="center"><a href="https://github.com/Beijizb/lx-b"><img width="200" src="https://github.com/Beijizb/lx-b/blob/main/doc/images/icon.png" alt="lx-music logo"></a></p>
+<p align="center"><a href="https://github.com/Beijizb/lx-all-music-mobile"><img width="200" src="https://github.com/Beijizb/lx-all-music-mobile/blob/main/doc/images/icon.png" alt="lx-music logo"></a></p>
 
 <h1 align="center">LX-N Music 移动版</h1>
 
 <p align="center">
-  <a href="https://github.com/Beijizb/lx-b/releases"><img src="https://img.shields.io/github/release/Beijizb/lx-b" alt="Release version"></a>
-  <a href="https://github.com/Beijizb/lx-b/actions/workflows/release.yml"><img src="https://github.com/Beijizb/lx-b/workflows/Build/badge.svg" alt="Build status"></a>
-  <a href="https://github.com/facebook/react-native"><img src="https://img.shields.io/github/package-json/dependency-version/Beijizb/lx-b/react-native/main" alt="React native version"></a>
+  <a href="https://github.com/Beijizb/lx-all-music-mobile/releases"><img src="https://img.shields.io/github/release/Beijizb/lx-all-music-mobile" alt="Release version"></a>
+  <a href="https://github.com/Beijizb/lx-all-music-mobile/actions/workflows/build.yml"><img src="https://github.com/Beijizb/lx-all-music-mobile/actions/workflows/build.yml/badge.svg" alt="Build status"></a>
+  <a href="https://github.com/facebook/react-native"><img src="https://img.shields.io/github/package-json/dependency-version/Beijizb/lx-all-music-mobile/react-native/main" alt="React native version"></a>
 </p>
 
 <p align="center">一个基于 React Native 开发的音乐软件</p>
@@ -14,6 +14,26 @@
 - https://github.com/lyswhut/lx-music-mobile
 - https://github.com/ikunshare/ikun-music-mobile
 
+---
+
+### 2.0.0.12
+
+#### 新增
+- Bilibili 搜索结果支持展开多 P，每个分 P 会作为独立歌曲保存对应 cid
+
+#### 修复、优化
+- 修复现代化首页和现代列表组件封面图片不显示的问题
+- 首页改为读取真实播放信息、我的歌单与歌曲封面，不再显示占位假数据
+- 优化 GitHub Actions 构建流程，减少 main 分支 Release 构建耗时
+- 应用内更新地址改为 `Beijizb/lx-all-music-mobile`，并优先使用 GitHub 加速地址
+---
+
+### 2.0.0.11
+
+#### 修复、优化
+- 优化 GitHub Actions 构建流程，main 推送时跳过 Debug APK 构建
+- 移除 Release 构建中的重复缓存步骤，减少 CI 准备时间
+- Release Gradle 构建启用 build cache 与 parallel 参数
 ---
 
 ### 2.0.0.10

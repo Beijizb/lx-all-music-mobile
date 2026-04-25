@@ -1,18 +1,11 @@
-/**
- * ModernHome - 现代化首页
- *
- * 灵感来自 Spotify、Apple Music、YouTube Music
- * 特性：
- * - 快速操作卡片
- * - 最近播放横向滚动
- * - 推荐歌单网格
- * - 现代化搜索框
- */
-
-import React, { useState, useCallback } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { View, ScrollView, TouchableOpacity } from 'react-native'
 import { useTheme } from '@/store/theme/hook'
+import { useMyList } from '@/store/list/hook'
+import { usePlayMusicInfo } from '@/store/player/hook'
 import Text from '@/components/common/Text'
+import Image from '@/components/common/Image'
+import { Icon } from '@/components/common/Icon'
 import {
   QuickActionCard,
   PlaylistCard,
@@ -20,16 +13,42 @@ import {
 } from '@/components/modern'
 import { createStyle } from '@/utils/tools'
 import { setNavActiveId } from '@/core/common'
-import { useI18n } from '@/lang'
+import { getListMusics, setActiveList } from '@/core/list'
+
+interface HomeListSummary {
+  id: string
+  name: string
+  count: number
+  coverUri?: string
+  tracks: LX.Music.MusicInfo[]
+}
+
+const getCover = (musics: LX.Music.MusicInfo[]) => {
+  return musics.find((music) => music.meta?.picUrl)?.meta.picUrl ?? undefined
+}
+
+const getPlayableMusicInfo = (musicInfo: LX.Player.PlayMusic | null) => {
+  if (!musicInfo) return null
+  return 'progress' in musicInfo ? musicInfo.metadata.musicInfo : musicInfo
+}
 
 export default function ModernHome() {
   const theme = useTheme()
-  const t = useI18n()
+  const allLists = useMyList()
+  const playMusicInfo = usePlayMusicInfo()
   const [searchText, setSearchText] = useState('')
+  const [listSummaries, setListSummaries] = useState<HomeListSummary[]>([])
+
+  const currentMusic = getPlayableMusicInfo(playMusicInfo.musicInfo)
+  const currentCover = currentMusic?.meta?.picUrl
 
   const handleSearch = useCallback(() => {
-    // 切换到搜索页面
     setNavActiveId('nav_search')
+  }, [])
+
+  const openList = useCallback((listId: string) => {
+    setActiveList(listId)
+    setNavActiveId('nav_love')
   }, [])
 
   const handleQuickAction = useCallback((action: string) => {
@@ -49,16 +68,69 @@ export default function ModernHome() {
     }
   }, [])
 
+  useEffect(() => {
+    let mounted = true
+
+    const refreshLists = async () => {
+      const summaries = await Promise.all(
+        allLists.map(async (list) => {
+          const musics = await getListMusics(list.id).catch(() => [])
+          return {
+            id: list.id,
+            name: list.name,
+            count: musics.length,
+            coverUri: getCover(musics),
+            tracks: musics.slice(0, 2),
+          }
+        })
+      )
+      if (mounted) setListSummaries(summaries)
+    }
+
+    const handleMusicUpdate = (ids: string[]) => {
+      if (!ids.some((id) => allLists.some((list) => list.id === id))) return
+      void refreshLists()
+    }
+
+    void refreshLists()
+    global.app_event.on('myListMusicUpdate', handleMusicUpdate)
+
+    return () => {
+      mounted = false
+      global.app_event.off('myListMusicUpdate', handleMusicUpdate)
+    }
+  }, [allLists])
+
+  const recentTracks = useMemo(() => {
+    const tracks: LX.Music.MusicInfo[] = []
+    for (const list of listSummaries) {
+      for (const music of list.tracks) {
+        if (!tracks.some((item) => item.id === music.id)) tracks.push(music)
+        if (tracks.length >= 8) return tracks
+      }
+    }
+    return tracks
+  }, [listSummaries])
+
+  const visibleLists = listSummaries.length
+    ? listSummaries.slice(0, 6)
+    : allLists.slice(0, 6).map((list) => ({
+        id: list.id,
+        name: list.name,
+        count: 0,
+        coverUri: undefined,
+        tracks: [],
+      }))
+
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: theme['c-app-background'] }]}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      {/* 搜索框 */}
-      <View style={styles.section}>
+      <View style={styles.searchSection}>
         <ModernSearchBar
-          placeholder="搜索歌曲、歌手、专辑"
+          placeholder="搜索歌曲、歌手、歌单"
           value={searchText}
           onChangeText={setSearchText}
           onSubmit={handleSearch}
@@ -66,106 +138,140 @@ export default function ModernHome() {
         />
       </View>
 
-      {/* 快速操作 */}
+      <TouchableOpacity
+        activeOpacity={0.86}
+        style={[
+          styles.nowPlaying,
+          {
+            backgroundColor: theme['c-primary-light-400-alpha-700'],
+            borderColor: theme['c-primary-light-600-alpha-700'],
+          },
+        ]}
+        onPress={() => handleQuickAction('mylist')}
+      >
+        <View
+          style={[
+            styles.nowPlayingCover,
+            { backgroundColor: theme['c-primary-light-200-alpha-700'] },
+          ]}
+        >
+          {currentCover ? (
+            <Image url={currentCover} style={styles.nowPlayingImage} />
+          ) : (
+            <Icon name="music" size={38} color={theme['c-primary']} />
+          )}
+        </View>
+        <View style={styles.nowPlayingInfo}>
+          <Text size={13} color={theme['c-font-label']} numberOfLines={1}>
+            {currentMusic ? '正在播放' : '准备播放'}
+          </Text>
+          <Text size={21} color={theme['c-font']} numberOfLines={1} style={styles.heroTitle}>
+            {currentMusic?.name || '打开你的音乐库'}
+          </Text>
+          <Text size={14} color={theme['c-font-label']} numberOfLines={1}>
+            {currentMusic?.singer || `${visibleLists.length} 个歌单可用`}
+          </Text>
+        </View>
+        <Icon name="chevron-right" size={20} color={theme['c-font-label']} />
+      </TouchableOpacity>
+
       <View style={styles.section}>
-        <Text size={20} color={theme['c-font']} style={styles.sectionTitle}>
-          快速操作
-        </Text>
-
         <View style={styles.quickActionsGrid}>
-          <QuickActionCard
-            icon="search-2"
-            title="搜索"
-            subtitle="发现更多音乐"
-            onPress={() => handleQuickAction('search')}
-          />
-
-          <QuickActionCard
-            icon="love"
-            title="每日推荐"
-            subtitle="为你精选"
-            gradient={[theme['c-primary'], theme['c-primary-dark-200']]}
-            onPress={() => handleQuickAction('daily')}
-          />
-
-          <QuickActionCard
-            icon="album"
-            title="我的音乐"
-            subtitle="本地和收藏"
-            onPress={() => handleQuickAction('mylist')}
-          />
-
-          <QuickActionCard
-            icon="trophy"
-            title="排行榜"
-            subtitle="热门歌曲"
-            onPress={() => handleQuickAction('leaderboard')}
-          />
+          <View style={styles.quickActionItem}>
+            <QuickActionCard
+              icon="search-2"
+              title="搜索"
+              subtitle="全源查找"
+              onPress={() => handleQuickAction('search')}
+            />
+          </View>
+          <View style={styles.quickActionItem}>
+            <QuickActionCard
+              icon="love"
+              title="每日推荐"
+              subtitle="今日歌单"
+              onPress={() => handleQuickAction('daily')}
+            />
+          </View>
+          <View style={styles.quickActionItem}>
+            <QuickActionCard
+              icon="album"
+              title="我的音乐"
+              subtitle="收藏列表"
+              onPress={() => handleQuickAction('mylist')}
+            />
+          </View>
+          <View style={styles.quickActionItem}>
+            <QuickActionCard
+              icon="trophy"
+              title="排行榜"
+              subtitle="热门趋势"
+              onPress={() => handleQuickAction('leaderboard')}
+            />
+          </View>
         </View>
       </View>
 
-      {/* 最近播放 */}
+      {recentTracks.length ? (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text size={18} color={theme['c-font']} style={styles.sectionTitle}>
+              最近的音乐
+            </Text>
+            <TouchableOpacity onPress={() => handleQuickAction('mylist')}>
+              <Text size={13} color={theme['c-primary']}>
+                查看全部
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+          >
+            {recentTracks.map((music) => (
+              <View key={music.id} style={styles.recentItem}>
+                <PlaylistCard
+                  coverUri={music.meta?.picUrl}
+                  title={music.name}
+                  subtitle={music.singer}
+                  onPress={() => handleQuickAction('mylist')}
+                />
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
+
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text size={20} color={theme['c-font']} style={styles.sectionTitle}>
-            最近播放
+          <Text size={18} color={theme['c-font']} style={styles.sectionTitle}>
+            我的歌单
           </Text>
           <TouchableOpacity onPress={() => handleQuickAction('mylist')}>
-            <Text size={14} color={theme['c-primary']}>
-              查看全部
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalList}
-        >
-          {/* 这里可以从播放历史中获取数据 */}
-          {[1, 2, 3, 4, 5].map((item) => (
-            <View key={item} style={styles.recentItem}>
-              <PlaylistCard
-                title={`歌单 ${item}`}
-                subtitle="最近播放"
-                count={20}
-                onPress={() => console.log('Playlist', item)}
-              />
-            </View>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* 推荐歌单 */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text size={20} color={theme['c-font']} style={styles.sectionTitle}>
-            推荐歌单
-          </Text>
-          <TouchableOpacity onPress={() => handleQuickAction('daily')}>
-            <Text size={14} color={theme['c-primary']}>
-              查看全部
+            <Text size={13} color={theme['c-primary']}>
+              管理
             </Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.playlistGrid}>
-          {/* 这里可以从每日推荐中获取数据 */}
-          {[1, 2, 3, 4, 5, 6].map((item) => (
-            <View key={item} style={styles.playlistItem}>
+          {visibleLists.map((list) => (
+            <View key={list.id} style={styles.playlistItem}>
               <PlaylistCard
-                title={`推荐歌单 ${item}`}
-                subtitle="精选好歌"
-                count={50}
-                onPress={() => console.log('Playlist', item)}
+                coverUri={list.coverUri}
+                title={list.name}
+                subtitle={list.count ? `${list.count} 首歌曲` : '暂无歌曲'}
+                count={list.count}
+                onPress={() => openList(list.id)}
               />
             </View>
           ))}
         </View>
       </View>
 
-      {/* 底部间距 */}
-      <View style={{ height: 100 }} />
+      <View style={styles.bottomSpacer} />
     </ScrollView>
   )
 }
@@ -175,36 +281,82 @@ const styles = createStyle({
     flex: 1,
   },
   content: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  searchSection: {
+    marginBottom: 14,
+  },
+  nowPlaying: {
+    minHeight: 116,
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 14,
+    marginBottom: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  nowPlayingCover: {
+    width: 86,
+    height: 86,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    marginRight: 14,
+  },
+  nowPlayingImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  nowPlayingInfo: {
+    flex: 1,
+    minWidth: 0,
+  },
+  heroTitle: {
+    fontWeight: '700',
+    marginTop: 5,
+    marginBottom: 5,
   },
   section: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   sectionTitle: {
     fontWeight: '700',
   },
   quickActionsGrid: {
-    gap: 12,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  quickActionItem: {
+    width: '48.5%',
+    marginBottom: 10,
   },
   horizontalList: {
-    gap: 16,
     paddingRight: 16,
   },
   recentItem: {
-    width: 140,
+    width: 128,
+    marginRight: 14,
   },
   playlistGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 16,
+    justifyContent: 'space-between',
   },
   playlistItem: {
-    width: '47%',
+    width: '48.5%',
+    marginBottom: 18,
+  },
+  bottomSpacer: {
+    height: 96,
   },
 })

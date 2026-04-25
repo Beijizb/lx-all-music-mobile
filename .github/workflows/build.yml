@@ -17,6 +17,7 @@ jobs:
   # Debug APK 构建
   build-debug:
     name: Build Debug APK
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     env:
       LANG: C.UTF-8
@@ -75,18 +76,6 @@ jobs:
 
       - name: Setup Env
         uses: ./.github/actions/setup
-
-      - name: Cache Gradle & npm
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            ~/.npm
-            android/.gradle
-          key: ${{ runner.os }}-build-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-
 
       - name: Remove Aliyun mirrors for CI
         run: |
@@ -162,6 +151,9 @@ jobs:
 
             # 构建 Release APK
             ./gradlew assembleRelease \
+              --no-daemon \
+              --build-cache \
+              --parallel \
               -PMYAPP_UPLOAD_STORE_FILE="${KEYSTORE_FILE}" \
               -PMYAPP_UPLOAD_KEY_ALIAS="${{ secrets.MYAPP_UPLOAD_KEY_ALIAS }}" \
               -PMYAPP_UPLOAD_STORE_PASSWORD="${{ secrets.MYAPP_UPLOAD_STORE_PASSWORD }}" \
@@ -174,6 +166,9 @@ jobs:
             echo "使用临时签名配置（secrets 未配置或无效）..."
             # 显式传递临时生成的 android/android 密码
             ./gradlew assembleRelease \
+              --no-daemon \
+              --build-cache \
+              --parallel \
               -PMYAPP_UPLOAD_STORE_FILE="ci.keystore" \
               -PMYAPP_UPLOAD_KEY_ALIAS="ci-key" \
               -PMYAPP_UPLOAD_STORE_PASSWORD="android" \
@@ -253,4 +248,3 @@ jobs:
             artifacts/${{ env.PACKAGE_NAME }}-v${{ env.PACKAGE_VERSION }}-universal.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-

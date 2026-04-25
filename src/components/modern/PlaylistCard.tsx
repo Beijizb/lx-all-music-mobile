@@ -95,7 +95,7 @@ export default function PlaylistCard({
         >
           {coverUri ? (
             <Image
-              source={{ uri: coverUri }}
+              url={coverUri}
               style={[styles.cover, { borderRadius }]}
             />
           ) : (

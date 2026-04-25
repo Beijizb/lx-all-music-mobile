@@ -111,6 +111,13 @@ export const toNewMusicInfo = (oldMusicInfo: any): LX.Music.MusicInfo => {
         meta.mrcUrl = oldMusicInfo.mrcUrl
         meta.trcUrl = oldMusicInfo.trcUrl
         break
+      case 'bi':
+        if (oldMusicInfo.meta?.bvid) meta.bvid = oldMusicInfo.meta.bvid
+        if (oldMusicInfo.meta?.aid) meta.aid = oldMusicInfo.meta.aid
+        if (oldMusicInfo.meta?.cid) meta.cid = oldMusicInfo.meta.cid
+        if (oldMusicInfo.meta?.page) meta.page = oldMusicInfo.meta.page
+        if (oldMusicInfo.meta?.part) meta.part = oldMusicInfo.meta.part
+        break
     }
   }
 
@@ -165,6 +172,8 @@ export const toOldMusicInfo = (minfo: LX.Music.MusicInfo): any => {
           ...(minfo.meta.bvid ? { bvid: minfo.meta.bvid } : {}),
           ...(minfo.meta.aid ? { aid: minfo.meta.aid } : {}),
           ...(minfo.meta.cid ? { cid: minfo.meta.cid } : {}),
+          ...(minfo.meta.page ? { page: minfo.meta.page } : {}),
+          ...(minfo.meta.part ? { part: minfo.meta.part } : {}),
         }
         break
     }

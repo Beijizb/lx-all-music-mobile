@@ -1,7 +1,15 @@
 {
-  "version": "2.0.0.10",
-  "desc": "修复现代化首页启动时 Icon 组件导入错误导致的白屏/渲染失败\n修复 ModernSearchBar、QuickActionCard、PlaylistCard 等新 UI 组件的图标渲染问题",
+  "version": "2.0.0.12",
+  "desc": "Bilibili 搜索结果支持展开多 P，每个分 P 会作为独立歌曲保存对应 cid\n修复现代化首页和现代列表组件封面图片不显示的问题\n首页改为读取真实播放信息、我的歌单与歌曲封面，不再显示占位假数据\n优化 GitHub Actions 构建流程，减少 main 分支 Release 构建耗时\n应用内更新地址改为 Beijizb/lx-all-music-mobile，并优先使用 GitHub 加速地址",
   "history": [
+    {
+      "version": "2.0.0.11",
+      "desc": "优化 GitHub Actions 构建流程，main 推送时跳过 Debug APK 构建\n移除 Release 构建中的重复缓存步骤，减少 CI 准备时间\nRelease Gradle 构建启用 build cache 与 parallel 参数"
+    },
+    {
+      "version": "2.0.0.10",
+      "desc": "修复现代化首页启动时 Icon 组件导入错误导致的白屏/渲染失败\n修复 ModernSearchBar、QuickActionCard、PlaylistCard 等新 UI 组件的图标渲染问题"
+    },
     {
       "version": "2.0.0.9",
       "desc": "完善 Bilibili 音乐来源说明，支持视频搜索、分 P 展开与收藏夹歌单\n同步 package 与 lockfile 版本信息"

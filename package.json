@@ -1,7 +1,7 @@
 {
   "name": "lx-b",
-  "version": "2.0.0.10",
-  "versionCode": 81,
+  "version": "2.0.0.12",
+  "versionCode": 83,
   "private": true,
   "scripts": {
     "dev": "react-native run-android --active-arch-only",
@@ -29,7 +29,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Beijizb/lx-netease-music-mobile.git"
+    "url": "git+https://github.com/Beijizb/lx-all-music-mobile.git"
   },
   "keywords": [
     "music-player",
@@ -41,9 +41,9 @@
   },
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/souvenp/lx-netease-music-mobile/issues"
+    "url": "https://github.com/Beijizb/lx-all-music-mobile/issues"
   },
-  "homepage": "https://github.com/souvenp/lx-netease-music-mobile#readme",
+  "homepage": "https://github.com/Beijizb/lx-all-music-mobile#readme",
   "dependencies": {
     "@craftzdog/react-native-buffer": "^6.0.5",
     "@react-native-async-storage/async-storage": "^2.1.1",

@@ -1,23 +1,31 @@
 import { httpGet } from '@/utils/request'
-import { author, name, repository } from '../../package.json'
+import { name } from '../../package.json'
 import { downloadFile, stopDownload, temporaryDirectoryPath } from '@/utils/fs'
 import { getSupportedAbis, installApk } from '@/utils/nativeModules/utils'
 import { APP_PROVIDER_NAME } from '@/config/constant'
 
 const abis = ['arm64-v8a', 'armeabi-v7a', 'x86_64', 'x86', 'universal']
 
-// 从 repository.url 中提取仓库名，如果没有则使用 name
-const repoName = repository?.url ? repository.url.match(/\/([^/]+)\.git$/)?.[1] || name : name
+const repoOwner = 'Beijizb'
+const repoName = 'lx-all-music-mobile'
+const repoBranch = 'main'
+const releaseAssetName = name
+const rawVersionUrl = `https://raw.githubusercontent.com/${repoOwner}/${repoName}/${repoBranch}/publish/version.json`
+const githubVersionUrl = `https://github.com/${repoOwner}/${repoName}/raw/${repoBranch}/publish/version.json`
+const githubReleaseUrl = (version, abi) =>
+  `https://github.com/${repoOwner}/${repoName}/releases/download/v${version}/${releaseAssetName}-v${version}-${abi}.apk`
+const proxyUrl = (proxy, url) => `${proxy}/${url}`
 
 const address = [
-  [
-    `https://raw.githubusercontent.com/${author.name}/${repoName}/master/publish/version.json`,
-    'direct',
-  ],
+  [proxyUrl('https://gh.bugdey.us.kg', rawVersionUrl), 'direct'],
+  [proxyUrl('https://ghfile.geekertao.top', rawVersionUrl), 'direct'],
+  [proxyUrl('https://github.dpik.top', rawVersionUrl), 'direct'],
+  [rawVersionUrl, 'direct'],
   // ['https://registry.npmjs.org/lx-music-mobile-version-info/latest', 'npm'],
-  [`https://cdn.jsdelivr.net/gh/${author.name}/${repoName}/publish/version.json`, 'direct'],
-  [`https://fastly.jsdelivr.net/gh/${author.name}/${repoName}/publish/version.json`, 'direct'],
-  [`https://gcore.jsdelivr.net/gh/${author.name}/${repoName}/publish/version.json`, 'direct'],
+  [`https://cdn.jsdelivr.net/gh/${repoOwner}/${repoName}@${repoBranch}/publish/version.json`, 'direct'],
+  [`https://fastly.jsdelivr.net/gh/${repoOwner}/${repoName}@${repoBranch}/publish/version.json`, 'direct'],
+  [`https://gcore.jsdelivr.net/gh/${repoOwner}/${repoName}@${repoBranch}/publish/version.json`, 'direct'],
+  [githubVersionUrl, 'direct'],
   // ['https://registry.npmmirror.com/lx-music-mobile-version-info/latest', 'npm'],
   // ['http://cdn.stsky.cn/lx-music/mobile/version.json', 'direct'],
 ]
@@ -88,34 +96,37 @@ let apkSavePath
 
 export const downloadNewVersion = async (version, onDownload = noop) => {
   const abi = await getTargetAbi()
-  // 使用实际的仓库名（从 repository.url 提取）来构建下载地址
-  // GitHub Releases 中的文件名格式是: lx-netease-music-mobile-v${version}-${abi}.apk
-  const url = `https://github.com/${author.name}/${repoName}/releases/download/v${version}/${repoName}-v${version}-${abi}.apk`
-  let savePath = temporaryDirectoryPath + '/lx-netease-music-mobile.apk'
+  const releaseUrl = githubReleaseUrl(version, abi)
+  const urls = [
+    proxyUrl('https://gh.bugdey.us.kg', releaseUrl),
+    proxyUrl('https://ghfile.geekertao.top', releaseUrl),
+    proxyUrl('https://github.dpik.top', releaseUrl),
+    releaseUrl,
+  ]
+  let savePath = temporaryDirectoryPath + `/${releaseAssetName}.apk`
 
-  if (downloadJobId) stopDownload(downloadJobId)
+  const download = (index = 0) => {
+    if (downloadJobId) stopDownload(downloadJobId)
 
-  const { jobId, promise } = downloadFile(url, savePath, {
-    progressInterval: 500,
-    connectionTimeout: 20000,
-    readTimeout: 30000,
-    begin({ statusCode, contentLength }) {
-      onDownload(contentLength, 0)
-      // switch (statusCode) {
-      //   case 200:
-      //   case 206:
-      //     break
-      //   default:
-      //     onDownload(null, contentLength, 0)
-      //     break
-      // }
-    },
-    progress({ contentLength, bytesWritten }) {
-      onDownload(contentLength, bytesWritten)
-    },
-  })
-  downloadJobId = jobId
-  return promise.then(() => {
+    const { jobId, promise } = downloadFile(urls[index], savePath, {
+      progressInterval: 500,
+      connectionTimeout: 20000,
+      readTimeout: 30000,
+      begin({ contentLength }) {
+        onDownload(contentLength, 0)
+      },
+      progress({ contentLength, bytesWritten }) {
+        onDownload(contentLength, bytesWritten)
+      },
+    })
+    downloadJobId = jobId
+    return promise.catch((err) => {
+      if (index + 1 >= urls.length) throw err
+      return download(index + 1)
+    })
+  }
+
+  return download().then(() => {
     apkSavePath = savePath
     return updateApp()
   })

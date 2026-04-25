@@ -103,6 +103,8 @@ declare namespace LX {
       bvid?: string
       aid?: string
       cid?: string
+      page?: number
+      part?: string
     }
     interface MusicInfo_bi extends MusicInfoBase<'bi'> {
       meta: MusicInfoMeta_bi

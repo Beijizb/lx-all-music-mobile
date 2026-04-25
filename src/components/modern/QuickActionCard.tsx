@@ -58,7 +58,7 @@ export default function QuickActionCard({
     }).start()
   }
 
-  const borderRadius = isMaterial ? 16 : 14
+  const borderRadius = 8
 
   return (
     <Pressable
@@ -116,7 +116,7 @@ export default function QuickActionCard({
           >
             <Icon
               name={icon}
-              size={32}
+              size={24}
               color={gradient ? '#FFFFFF' : theme['c-primary']}
             />
           </View>
@@ -124,20 +124,22 @@ export default function QuickActionCard({
           {/* 文字 */}
           <View style={styles.textContainer}>
             <Text
-              size={18}
+              size={15}
               color={gradient ? '#FFFFFF' : theme['c-font']}
+              numberOfLines={1}
               style={styles.title}
             >
               {title}
             </Text>
             {subtitle && (
               <Text
-                size={14}
+                size={12}
                 color={
                   gradient
                     ? 'rgba(255, 255, 255, 0.8)'
                     : theme['c-font-label']
                 }
+                numberOfLines={1}
                 style={styles.subtitle}
               >
                 {subtitle}
@@ -169,14 +171,14 @@ const styles = createStyle({
   content: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: 12,
   },
   iconContainer: {
-    width: 56,
-    height: 56,
+    width: 42,
+    height: 42,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    marginRight: 10,
   },
   textContainer: {
     flex: 1,
@@ -186,6 +188,6 @@ const styles = createStyle({
     marginBottom: 4,
   },
   subtitle: {
-    lineHeight: 18,
+    lineHeight: 16,
   },
 })
